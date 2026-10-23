@@ -227,7 +227,7 @@ app.post('/messages', async (req: Request, res: Response) => {
     return;
   }
 
-  await transport.handlePostMessage(req, res);
+  await transport.handlePostMessage(req, res, req.body);
 });
 
 // Health check
