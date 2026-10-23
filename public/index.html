@@ -528,6 +528,32 @@
     }
 
     /* Device Responsive Breakpoints */
+    /* Mobile / Default Layout Reset for Wrappers */
+    .desktop-body,
+    .desktop-col-left,
+    .desktop-col-right {
+      display: contents;
+    }
+    .top-bar-left, .top-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .brand-badge-desktop {
+      display: none;
+    }
+    .desktop-inspector-btn {
+      display: none;
+    }
+    .desktop-status-card {
+      display: none;
+    }
+
+    @keyframes sparkGlow {
+      0% { opacity: 0.8; filter: drop-shadow(0 0 2px rgba(124, 58, 237, 0.4)); }
+      100% { opacity: 1; filter: drop-shadow(0 0 8px rgba(124, 58, 237, 0.8)); }
+    }
+
     @media (max-width: 480px) {
       body { padding: 0.5rem; }
       .device-shell {
@@ -537,6 +563,192 @@
       .companion-orb { width: 125px; height: 125px; }
       .greeting-title { font-size: 1.5rem; }
     }
+
+    /* Desktop View: Expands gracefully into a wide workstation console */
+    @media (min-width: 900px) {
+      body {
+        padding: 2.5rem 1.5rem;
+        align-items: center;
+        min-height: 100vh;
+      }
+
+      .device-shell {
+        max-width: 1140px;
+        width: 100%;
+        border-radius: 36px;
+        padding: 2rem 2.25rem 2.25rem 2.25rem;
+        gap: 1.75rem;
+        background: rgba(255, 255, 255, 0.55);
+        backdrop-filter: blur(40px) saturate(180%);
+        -webkit-backdrop-filter: blur(40px) saturate(180%);
+        border: 2px solid rgba(255, 255, 255, 0.95);
+        box-shadow: 
+          0 35px 85px -20px rgba(99, 102, 241, 0.25),
+          0 0 0 1px rgba(255, 255, 255, 0.9),
+          0 0 45px rgba(168, 85, 247, 0.12),
+          inset 0 1.5px 3px rgba(255, 255, 255, 0.95);
+      }
+
+      /* Desktop Top Navigation Bar */
+      .mobile-inspector-btn {
+        display: none;
+      }
+      .desktop-inspector-btn {
+        display: flex;
+      }
+      .brand-badge-desktop {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-weight: 800;
+        font-size: 1.08rem;
+        color: var(--text-primary);
+        letter-spacing: -0.3px;
+      }
+      .brand-badge-desktop .brand-logo {
+        background: linear-gradient(135deg, var(--alexa-purple), var(--alexa-blue));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-size: 1.35rem;
+        animation: sparkGlow 3s infinite alternate;
+      }
+      .brand-badge-desktop .version-tag {
+        font-size: 0.72rem;
+        font-weight: 700;
+        background: #ede9fe;
+        color: var(--alexa-purple);
+        border: 1px solid rgba(139, 92, 246, 0.2);
+        padding: 0.2rem 0.6rem;
+        border-radius: 9999px;
+        letter-spacing: 0.2px;
+      }
+
+      /* Desktop Dual-Pane Grid */
+      .desktop-body {
+        display: grid;
+        grid-template-columns: 370px 1fr;
+        gap: 2rem;
+        align-items: stretch;
+      }
+
+      /* Left Pane: Presence, Living Companion & System Telemetry */
+      .desktop-col-left {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        background: rgba(255, 255, 255, 0.45);
+        border: 1.5px solid rgba(255, 255, 255, 0.9);
+        border-radius: 30px;
+        padding: 2rem 1.75rem 1.75rem 1.75rem;
+        box-shadow: 
+          0 16px 36px -12px rgba(99, 102, 241, 0.09),
+          inset 0 1px 2px rgba(255, 255, 255, 0.9);
+      }
+
+      .greeting-block {
+        text-align: center;
+        padding-top: 0.25rem;
+      }
+      .greeting-title {
+        font-size: 1.85rem;
+      }
+      .greeting-subtitle {
+        font-size: 1.05rem;
+      }
+
+      .companion-stage {
+        padding: 2.25rem 0 1.25rem 0;
+      }
+      .companion-orb {
+        width: 155px;
+        height: 155px;
+      }
+      .orb-halo {
+        width: 210px;
+        height: 210px;
+      }
+
+      /* Desktop Live Telemetry Card */
+      .desktop-status-card {
+        display: flex;
+        flex-direction: column;
+        gap: 0.65rem;
+        background: rgba(255, 255, 255, 0.75);
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        padding: 0.95rem 1.15rem;
+        margin-top: 1rem;
+        box-shadow: 0 6px 18px rgba(99, 102, 241, 0.05);
+      }
+      .status-card-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.78rem;
+      }
+      .status-card-label {
+        font-weight: 600;
+        color: var(--text-secondary);
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+      }
+      .status-card-val {
+        font-weight: 700;
+        color: var(--text-primary);
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.75rem;
+      }
+      .status-pulse-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--alexa-emerald);
+        box-shadow: 0 0 8px var(--alexa-emerald);
+        display: inline-block;
+      }
+
+      /* Right Pane: Command Center & Stream Feed */
+      .desktop-col-right {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 1.25rem;
+        min-height: 540px;
+      }
+
+      .features-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.85rem;
+      }
+      .feature-tile {
+        padding: 0.95rem 0.9rem;
+      }
+      .tile-icon {
+        width: 38px;
+        height: 38px;
+        font-size: 1.2rem;
+      }
+
+      .stream-feed {
+        flex: 1;
+        min-height: 380px;
+        max-height: 430px;
+        background: rgba(255, 255, 255, 0.35);
+        border: 1px solid rgba(255, 255, 255, 0.75);
+        border-radius: 26px;
+        padding: 1.1rem 1rem;
+        box-shadow: inset 0 2px 6px rgba(99, 102, 241, 0.03);
+      }
+
+      .input-capsule {
+        padding: 0.45rem 0.55rem 0.45rem 1.1rem;
+        box-shadow: 0 16px 36px -8px rgba(99, 102, 241, 0.18);
+      }
+      .prompt-field {
+        font-size: 1rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -544,84 +756,131 @@
     
     <!-- Top Action Bar -->
     <div class="top-bar">
-      <button class="icon-pill-btn" onclick="toggleInspectorAll()" title="Inspect MCP Stream">
-        ⚡
-      </button>
+      <!-- Left side: Inspector toggle on mobile, Brand badge on desktop -->
+      <div class="top-bar-left">
+        <button class="icon-pill-btn mobile-inspector-btn" onclick="toggleInspectorAll()" title="Inspect MCP Stream">
+          ⚡
+        </button>
+        <div class="brand-badge-desktop">
+          <span class="brand-logo">✦</span>
+          <span class="brand-text">Alexa+ Hub <span class="version-tag">MCP 2.4</span></span>
+        </div>
+      </div>
+
+      <!-- Center Status Badge -->
       <div class="status-badge">
         <div id="statusDot" class="status-dot"></div>
         <span id="sessionStatus">Connecting...</span>
       </div>
-      <button id="voiceToggleBtn" class="icon-pill-btn" onclick="toggleVoiceSpeech()" title="Toggle Voice Output">
-        🔊
-      </button>
+
+      <!-- Right side: Audio toggle on mobile, Inspector + Audio on desktop -->
+      <div class="top-bar-right">
+        <button class="icon-pill-btn desktop-inspector-btn" onclick="toggleInspectorAll()" title="Inspect MCP Stream">
+          ⚡
+        </button>
+        <button id="voiceToggleBtn" class="icon-pill-btn" onclick="toggleVoiceSpeech()" title="Toggle Voice Output">
+          🔊
+        </button>
+      </div>
     </div>
 
-    <!-- Friendly Greeting -->
-    <div class="greeting-block">
-      <h1 class="greeting-title">Hello, Zamaan!</h1>
-      <p class="greeting-subtitle">How can I help you today?</p>
-    </div>
+    <!-- Desktop Split Container (Preserves mobile order via display: contents) -->
+    <div class="desktop-body">
 
-    <!-- Living Companion Stage (Floating Orb with Animated Eyes) -->
-    <div class="companion-stage">
-      <div class="orb-halo"></div>
-      <div id="companionOrb" class="companion-orb" onclick="toggleMicRecording()">
-        <div class="orb-eyes">
-          <div class="eye"></div>
-          <div class="eye"></div>
+      <!-- Left Column: Presence, Living Companion & Live Telemetry -->
+      <div class="desktop-col-left">
+        
+        <!-- Friendly Greeting -->
+        <div class="greeting-block">
+          <h1 class="greeting-title">Hello, Zamaan!</h1>
+          <p class="greeting-subtitle">How can I help you today?</p>
         </div>
-      </div>
-      <div class="orb-shadow"></div>
-      <div id="stageStatusText" class="stage-helper-text">Tap the orb or select an action below</div>
-    </div>
 
-    <!-- 2x2 Feature Quick Grid (Exact Reference Arrangement) -->
-    <div class="features-grid">
-      <div class="feature-tile" onclick="handlePrompt('Alexa, check climate and optimize home')">
-        <div class="tile-icon climate">🌤️</div>
-        <div class="tile-label">Check<br>Climate</div>
-      </div>
-      <div class="feature-tile" onclick="handlePrompt('Alexa, calibrate Fire TV canvas')">
-        <div class="tile-icon firetv">📺</div>
-        <div class="tile-label">Calibrate<br>Fire TV</div>
-      </div>
-      <div class="feature-tile" onclick="handlePrompt('Alexa, analyze energy grid savings')">
-        <div class="tile-icon energy">⚡</div>
-        <div class="tile-label">Grid<br>Analytics</div>
-      </div>
-      <div class="feature-tile" onclick="handlePrompt('Alexa, turn on Movie Night scene')">
-        <div class="tile-icon movie">🎬</div>
-        <div class="tile-label">Movie<br>Night</div>
-      </div>
-    </div>
-
-    <!-- Live Multi-Modal Feed -->
-    <div id="streamFeed" class="stream-feed">
-      <!-- Welcome initial card -->
-      <div class="modal-card">
-        <div class="card-top">
-          <span class="pill-badge firetv">Alexa+ MCP Protocol</span>
-          <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600;">Streamable HTTP</span>
+        <!-- Living Companion Stage (Floating Orb with Animated Eyes) -->
+        <div class="companion-stage">
+          <div class="orb-halo"></div>
+          <div id="companionOrb" class="companion-orb" onclick="toggleMicRecording()">
+            <div class="orb-eyes">
+              <div class="eye"></div>
+              <div class="eye"></div>
+            </div>
+          </div>
+          <div class="orb-shadow"></div>
+          <div id="stageStatusText" class="stage-helper-text">Tap the orb or select an action below</div>
         </div>
-        <p class="card-speech">
-          Connected to the <strong>Alexa+ Intelligence MCP Server</strong>. Tap any action or speak to control your climate, Fire TV canvas, and smart home.
-        </p>
-      </div>
-    </div>
 
-    <!-- Bottom Sleek iOS-Style Input Bar (Exact Reference Match) -->
-    <div class="input-capsule">
-      <div class="plus-badge" onclick="handlePrompt('Alexa, what can you do?')" title="Show capabilities">+</div>
-      <input 
-        id="promptInput" 
-        type="text" 
-        class="prompt-field" 
-        placeholder="Ask me anything..."
-        onkeydown="if(event.key === 'Enter') submitPromptInput()"
-      />
-      <button id="voiceMicBtn" class="voice-mic-btn" onclick="toggleMicRecording()" title="Speak voice command">
-        🎙️
-      </button>
+        <!-- Desktop Environment & Protocol Telemetry Widget -->
+        <div class="desktop-status-card">
+          <div class="status-card-row">
+            <span class="status-card-label"><span class="status-pulse-dot"></span> Protocol</span>
+            <span class="status-card-val">MCP Streamable HTTP</span>
+          </div>
+          <div class="status-card-row">
+            <span class="status-card-label">📺 Ambient Canvas</span>
+            <span class="status-card-val">D65 / Dolby Atmos</span>
+          </div>
+          <div class="status-card-row">
+            <span class="status-card-label">📍 Geo Anchor</span>
+            <span class="status-card-val" id="desktopGeoVal">Kolkata, IN</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Command Quick Actions & Live Stream Feed -->
+      <div class="desktop-col-right">
+
+        <!-- 2x2 Feature Quick Grid (Transforms into 4-across on Desktop) -->
+        <div class="features-grid">
+          <div class="feature-tile" onclick="handlePrompt('Alexa, check climate and optimize home')">
+            <div class="tile-icon climate">🌤️</div>
+            <div class="tile-label">Check<br>Climate</div>
+          </div>
+          <div class="feature-tile" onclick="handlePrompt('Alexa, calibrate Fire TV canvas')">
+            <div class="tile-icon firetv">📺</div>
+            <div class="tile-label">Calibrate<br>Fire TV</div>
+          </div>
+          <div class="feature-tile" onclick="handlePrompt('Alexa, analyze energy grid savings')">
+            <div class="tile-icon energy">⚡</div>
+            <div class="tile-label">Grid<br>Analytics</div>
+          </div>
+          <div class="feature-tile" onclick="handlePrompt('Alexa, turn on Movie Night scene')">
+            <div class="tile-icon movie">🎬</div>
+            <div class="tile-label">Movie<br>Night</div>
+          </div>
+        </div>
+
+        <!-- Live Multi-Modal Feed -->
+        <div id="streamFeed" class="stream-feed">
+          <!-- Welcome initial card -->
+          <div class="modal-card">
+            <div class="card-top">
+              <span class="pill-badge firetv">Alexa+ MCP Protocol</span>
+              <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600;">Streamable HTTP</span>
+            </div>
+            <p class="card-speech">
+              Connected to the <strong>Alexa+ Intelligence MCP Server</strong>. Tap any action or speak to control your climate, Fire TV canvas, and smart home.
+            </p>
+          </div>
+        </div>
+
+        <!-- Bottom Sleek iOS-Style Input Bar (Exact Reference Match) -->
+        <div class="input-capsule">
+          <div class="plus-badge" onclick="handlePrompt('Alexa, what can you do?')" title="Show capabilities">+</div>
+          <input 
+            id="promptInput" 
+            type="text" 
+            class="prompt-field" 
+            placeholder="Ask me anything..."
+            onkeydown="if(event.key === 'Enter') submitPromptInput()"
+          />
+          <button id="voiceMicBtn" class="voice-mic-btn" onclick="toggleMicRecording()" title="Speak voice command">
+            🎙️
+          </button>
+        </div>
+
+      </div>
+
     </div>
 
   </div>
@@ -646,6 +905,8 @@
           userLocation.lat = pos.coords.latitude;
           userLocation.lon = pos.coords.longitude;
           userLocation.name = 'Your Location';
+          const geoEl = document.getElementById('desktopGeoVal');
+          if (geoEl) geoEl.textContent = 'Active (Auto-GPS)';
         },
         () => console.log('Location preset: Kolkata, India')
       );
