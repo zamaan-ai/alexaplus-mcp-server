@@ -865,7 +865,14 @@
 
       if (lower.includes('weather') || lower.includes('prep') || lower.includes('check') || lower.includes('temperature') || lower.includes('temp')) {
         const detectedCity = extractCityFromPrompt(promptText);
-        if (detectedCity) {
+        if (detectedCity && detectedCity.toLowerCase() === 'kolkata') {
+          invokeTool('get_weather_and_energy_advisory', {
+            latitude: 22.5726,
+            longitude: 88.3639,
+            locationName: 'Kolkata, India',
+            targetDeviceContext: 'fire_tv'
+          });
+        } else if (detectedCity) {
           invokeTool('get_weather_and_energy_advisory', {
             cityOrLocation: detectedCity,
             targetDeviceContext: 'fire_tv'
@@ -900,8 +907,6 @@
           longitude: userLocation.lon,
           locationName: userLocation.name
         });
-      }
-    }
       }
     }
 
