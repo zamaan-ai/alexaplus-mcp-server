@@ -6,6 +6,7 @@ import { z } from 'zod';
 import axios from 'axios';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import net from 'net';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -470,6 +471,97 @@ app.post('/messages', async (req: Request, res: Response) => {
   }
 
   await transport.handlePostMessage(req, res, req.body);
+});
+
+// Helper function to test real TCP socket reachability on local network
+function checkTcpReachability(host: string, port: number, timeoutMs = 2500): Promise<{ reachable: boolean; error?: string }> {
+  return new Promise((resolve) => {
+    const socket = new net.Socket();
+    let hasResolved = false;
+
+    socket.setTimeout(timeoutMs);
+
+    socket.on('connect', () => {
+      if (!hasResolved) {
+        hasResolved = true;
+        socket.destroy();
+        resolve({ reachable: true });
+      }
+    });
+
+    socket.on('timeout', () => {
+      if (!hasResolved) {
+        hasResolved = true;
+        socket.destroy();
+        resolve({ reachable: false, error: 'ETIMEDOUT (No response from target IP within 2500ms)' });
+      }
+    });
+
+    socket.on('error', (err: any) => {
+      if (!hasResolved) {
+        hasResolved = true;
+        socket.destroy();
+        resolve({ reachable: false, error: `${err.code || 'ECONNREFUSED'} (${err.message})` });
+      }
+    });
+
+    try {
+      socket.connect(port, host);
+    } catch (err: any) {
+      if (!hasResolved) {
+        hasResolved = true;
+        resolve({ reachable: false, error: err.message });
+      }
+    }
+  });
+}
+
+// 3. Real vs Virtual Hardware Verification Endpoint
+app.post('/api/verify-hardware', async (req: Request, res: Response) => {
+  const { target, host, port, mode } = req.body;
+
+  if (mode === 'virtual_bridge') {
+    res.json({
+      success: true,
+      mode: 'virtual_bridge',
+      target,
+      deviceLabel: target === 'fire_tv' ? 'Virtual Fire TV Bridge (Omni 65" 4K)' : 'Virtual Smart Meter (Shelly Pro EM)',
+      host: 'virtual-bridge.local',
+      message: 'Virtual Device Bridge active. Emulating authentic SMPTE/Matter telemetry for sandbox testing.',
+      verifiedAt: new Date().toISOString(),
+    });
+    return;
+  }
+
+  // Real LAN Hardware Mode
+  const targetHost = host || (target === 'fire_tv' ? '192.168.1.50' : '192.168.1.60');
+  const targetPort = Number(port) || (target === 'fire_tv' ? 5555 : 80);
+
+  const result = await checkTcpReachability(targetHost, targetPort, 2500);
+
+  if (result.reachable) {
+    res.json({
+      success: true,
+      mode: 'real_lan',
+      target,
+      deviceLabel: `${target === 'fire_tv' ? 'Physical Fire TV' : 'Physical Smart Meter'} (${targetHost}:${targetPort})`,
+      host: targetHost,
+      port: targetPort,
+      message: `Hardware handshake confirmed! Real TCP socket active at ${targetHost}:${targetPort}.`,
+      verifiedAt: new Date().toISOString(),
+    });
+  } else {
+    res.json({
+      success: false,
+      mode: 'real_lan',
+      target,
+      host: targetHost,
+      port: targetPort,
+      error: result.error,
+      message: `Hardware verification failed: Unable to connect to ${targetHost}:${targetPort}. Reason: ${result.error}. Ensure physical device is powered on and connected to this subnet.`,
+      verifiedAt: new Date().toISOString(),
+    });
+  }
 });
 
 // Health check

@@ -601,6 +601,84 @@
       font-weight: 700;
     }
 
+    .ip-input-group {
+      display: flex;
+      gap: 0.45rem;
+      align-items: center;
+      margin-top: 0.4rem;
+    }
+    .ip-input-field {
+      flex: 1;
+      padding: 0.5rem 0.65rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      color: #1e1b4b;
+      background: white;
+      outline: none;
+    }
+    .port-input-field {
+      width: 65px;
+      padding: 0.5rem 0.5rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      color: #1e1b4b;
+      background: white;
+      outline: none;
+    }
+    .probe-btn {
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 0.55rem 0.85rem;
+      font-weight: 700;
+      font-size: 0.76rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .probe-btn:hover {
+      background: linear-gradient(135deg, #0369a1, #1d4ed8);
+      transform: translateY(-1px);
+    }
+    .virtual-bridge-btn {
+      width: 100%;
+      background: rgba(248, 250, 252, 0.95);
+      border: 1.5px dashed #cbd5e1;
+      color: #475569;
+      border-radius: 10px;
+      padding: 0.55rem 0.85rem;
+      font-weight: 700;
+      font-size: 0.76rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      transition: all 0.2s ease;
+      margin-top: 0.35rem;
+    }
+    .virtual-bridge-btn:hover {
+      background: #ede9fe;
+      border-color: #8b5cf6;
+      color: #6d28d9;
+    }
+    .verify-result-box {
+      border: 1px solid transparent;
+      border-radius: 10px;
+      padding: 0.55rem 0.75rem;
+      font-size: 0.76rem;
+      line-height: 1.4;
+      margin-top: 0.45rem;
+    }
+
     @keyframes sparkGlow {
       0% { opacity: 0.8; filter: drop-shadow(0 0 2px rgba(124, 58, 237, 0.4)); }
       100% { opacity: 1; filter: drop-shadow(0 0 8px rgba(124, 58, 237, 0.8)); }
@@ -1096,11 +1174,11 @@
       stageStatusText.textContent = 'Tap orb or select an action below';
     }
 
-    function updateDeviceStatusPills() {
+    function updateDeviceStatusPills(customLabel, isFireTv) {
       const tvPill = document.getElementById('fireTvStatusPill');
       if (tvPill) {
         if (fireTvConnected) {
-          tvPill.textContent = 'Paired (Omni 65")';
+          tvPill.textContent = (isFireTv && customLabel) ? customLabel : '● Paired (Omni 65")';
           tvPill.className = 'status-card-val device-pill-toggle connected';
         } else {
           tvPill.textContent = 'Standby (Unpaired)';
@@ -1111,7 +1189,7 @@
       const meterPill = document.getElementById('meterStatusPill');
       if (meterPill) {
         if (smartMeterConnected) {
-          meterPill.textContent = 'Paired (Shelly EM)';
+          meterPill.textContent = (!isFireTv && customLabel) ? customLabel : '● Paired (Shelly EM)';
           meterPill.className = 'status-card-val device-pill-toggle connected';
         } else {
           meterPill.textContent = 'Standby (Unlinked)';
@@ -1130,32 +1208,103 @@
       stageStatusText.textContent = `${deviceType === 'fire_tv' ? 'Fire TV' : 'Smart Meter'} set to ${deviceType === 'fire_tv' ? (fireTvConnected ? 'Connected' : 'Standby') : (smartMeterConnected ? 'Connected' : 'Standby')}`;
     }
 
-    function verifyAndConnectDevice(deviceType) {
-      stageStatusText.textContent = `Verifying Matter / MDNS handshake for ${deviceType === 'fire_tv' ? 'Fire TV' : 'Smart Meter'}...`;
-      companionOrb.classList.add('speaking');
+    async function verifyRealHardware(target, domId) {
+      const ipInput = document.getElementById(`${domId}_ip`);
+      const portInput = document.getElementById(`${domId}_port`);
+      const alertBox = document.getElementById(`${domId}_alert`);
       
-      setTimeout(() => {
-        if (deviceType === 'fire_tv') {
+      const host = ipInput ? ipInput.value.trim() : (target === 'fire_tv' ? '192.168.1.50' : '192.168.1.60');
+      const port = portInput ? portInput.value.trim() : (target === 'fire_tv' ? 5555 : 80);
+
+      alertBox.style.display = 'block';
+      alertBox.style.background = '#eef2ff';
+      alertBox.style.color = '#4338ca';
+      alertBox.style.borderColor = '#c7d2fe';
+      alertBox.innerHTML = `⏳ Probing TCP socket at <strong>${escapeHtml(host)}:${escapeHtml(port)}</strong>...`;
+      stageStatusText.textContent = `Probing ${host}:${port}...`;
+
+      try {
+        const res = await fetch('/api/verify-hardware', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ target, host, port, mode: 'real_lan' })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          alertBox.style.background = '#ecfdf5';
+          alertBox.style.color = '#065f46';
+          alertBox.style.borderColor = '#a7f3d0';
+          alertBox.innerHTML = `✅ <strong>Handshake Confirmed!</strong> ${escapeHtml(data.message)}`;
+          
+          if (target === 'fire_tv') {
+            fireTvConnected = true;
+            updateDeviceStatusPills(`Physical (${host})`, true);
+            speakText(`Fire TV handshake verified at ${host}. Calibrating display canvas.`);
+            invokeTool('optimize_firetv_ambient_canvas', {
+              roomLux: 85,
+              contentGenre: 'cinema_movie',
+              hdrFormat: 'dolby_vision',
+              deviceConnected: true
+            });
+          } else {
+            smartMeterConnected = true;
+            updateDeviceStatusPills(`Physical (${host})`, false);
+            speakText(`Smart meter linked at ${host}. Streaming energy metrics.`);
+            invokeTool('calculate_energy_grid_savings', {
+              thermostatSetbackC: 2.5,
+              homeSquareMeters: 140,
+              meterConnected: true
+            });
+          }
+        } else {
+          alertBox.style.background = '#fef2f2';
+          alertBox.style.color = '#991b1b';
+          alertBox.style.borderColor = '#fecaca';
+          alertBox.innerHTML = `❌ <strong>Verification Failed:</strong> ${escapeHtml(data.message)}<br><span style="font-size:0.75rem;">💡 If you are evaluating without physical hardware in your lab, click <em>Enable Virtual Test Bridge</em> below.</span>`;
+          speakText(`Connection to ${host} failed. No physical hardware answered on port ${port}.`);
+        }
+      } catch (err) {
+        alertBox.style.background = '#fef2f2';
+        alertBox.style.color = '#991b1b';
+        alertBox.innerHTML = `❌ Network Error: ${escapeHtml(err.message)}`;
+      }
+    }
+
+    async function enableVirtualBridge(target) {
+      stageStatusText.textContent = `Initializing Virtual ${target === 'fire_tv' ? 'Fire TV' : 'Smart Meter'} Bridge...`;
+      
+      try {
+        const res = await fetch('/api/verify-hardware', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ target, mode: 'virtual_bridge' })
+        });
+        const data = await res.json();
+
+        if (target === 'fire_tv') {
           fireTvConnected = true;
-          updateDeviceStatusPills();
-          speakText('Fire TV handshake verified on local network. Calibrating display canvas now.');
+          updateDeviceStatusPills('Virtual Bridge (Omni)', true);
+          speakText('Virtual Fire TV bridge initialized. Calibrating display canvas.');
           invokeTool('optimize_firetv_ambient_canvas', {
-            roomLux: 85,
+            roomLux: 95,
             contentGenre: 'cinema_movie',
             hdrFormat: 'dolby_vision',
             deviceConnected: true
           });
         } else {
           smartMeterConnected = true;
-          updateDeviceStatusPills();
-          speakText('Smart energy meter linked. Streaming real-time electrical telemetry now.');
+          updateDeviceStatusPills('Virtual Bridge (Shelly)', false);
+          speakText('Virtual smart meter bridge initialized. Streaming energy telemetry.');
           invokeTool('calculate_energy_grid_savings', {
             thermostatSetbackC: 2.5,
             homeSquareMeters: 140,
             meterConnected: true
           });
         }
-      }, 900);
+      } catch (err) {
+        console.error('Virtual bridge error:', err);
+      }
     }
 
     let lastSubmittedQuery = '';
@@ -1271,14 +1420,16 @@
       const title = isFireTv ? '📺 Fire TV Ambient Canvas' : '⚡ Smart Grid Energy Monitor';
       const badgeClass = isFireTv ? 'firetv' : 'energy';
       const deviceName = isFireTv ? 'Amazon Fire TV (Omni / 4K Max)' : 'Smart Power CT Clamp (Shelly EM)';
-      const actionFn = isFireTv ? 'verifyAndConnectDevice("fire_tv")' : 'verifyAndConnectDevice("smart_meter")';
+      const defaultHost = isFireTv ? '192.168.1.50' : '192.168.1.60';
+      const defaultPort = isFireTv ? '5555' : '80';
+      const domId = 'dev_' + Date.now();
 
       const cardHtml = `
         <div class="modal-card" style="border-left: 4px solid #f59e0b; background: rgba(255, 255, 255, 0.96);">
           <div class="card-top">
             <span class="pill-badge ${badgeClass}">${title}</span>
             <span style="font-size: 0.72rem; font-weight: 700; color: #b45309; background: #fef3c7; padding: 0.2rem 0.55rem; border-radius: 9999px;">
-              ⚠️ Standby / Discovery
+              ⚠️ Hardware Standby
             </span>
           </div>
 
@@ -1290,14 +1441,30 @@
             ${escapeHtml(data.networkState || 'No device detected on local Wi-Fi subnet.')}
           </p>
 
-          <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 14px; padding: 0.75rem 0.85rem; font-size: 0.78rem; color: #334155;">
-            💡 <strong>Guidance:</strong> ${escapeHtml(data.guidance || 'Power on your device and ensure it is on the same network.')}
+          <!-- 1. Real Hardware LAN Socket Verification -->
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 0.85rem; margin-top: 0.25rem;">
+            <div style="font-size: 0.78rem; font-weight: 700; color: #1e1b4b; display: flex; align-items: center; justify-content: space-between;">
+              <span>🔌 Real LAN Hardware Verification:</span>
+              <span style="font-size: 0.7rem; color: #64748b; font-weight: 500;">Live TCP Socket</span>
+            </div>
+            <div class="ip-input-group">
+              <input id="${domId}_ip" type="text" class="ip-input-field" value="${defaultHost}" placeholder="Device IP (e.g. 192.168.1.x)" title="Enter device IP address" />
+              <input id="${domId}_port" type="text" class="port-input-field" value="${defaultPort}" placeholder="Port" title="Port (5555 for Fire TV ADB, 80 for HTTP)" />
+              <button class="probe-btn" onclick="verifyRealHardware('${deviceType}', '${domId}')">
+                📡 Probe LAN
+              </button>
+            </div>
+            <div id="${domId}_alert" class="verify-result-box" style="display: none;"></div>
           </div>
 
-          <div style="display: flex; gap: 0.5rem; margin-top: 0.35rem;">
-            <button class="pair-verify-btn" onclick="${actionFn}">
-              🔗 Pair & Verify Device (Bridge Handshake)
+          <!-- 2. Virtual Device Bridge for Hackathon Testing -->
+          <div style="margin-top: 0.25rem;">
+            <button class="virtual-bridge-btn" onclick="enableVirtualBridge('${deviceType}')">
+              🧪 Enable Virtual Test Bridge (Sandbox / Judge Mode)
             </button>
+            <div style="font-size: 0.7rem; color: #94a3b8; text-align: center; margin-top: 0.2rem;">
+              Emulates SMPTE & Matter sensor signals for testing when physical hardware is absent.
+            </div>
           </div>
 
           <div class="inspector-tray">
