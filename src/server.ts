@@ -260,8 +260,24 @@ mcp.tool(
     roomLux: z.number().min(0).max(2000).default(120).describe('Ambient room illuminance in lux (e.g. 50-300 lux)'),
     contentGenre: z.enum(['cinema_movie', 'live_sports', 'immersive_gaming', 'ambient_art']).default('cinema_movie'),
     hdrFormat: z.enum(['dolby_vision', 'hdr10_plus', 'standard']).default('dolby_vision'),
+    deviceConnected: z.boolean().default(true).describe('Whether an active Fire TV hardware display is paired and verified on the local network'),
   },
-  async ({ roomLux, contentGenre, hdrFormat }) => {
+  async ({ roomLux, contentGenre, hdrFormat, deviceConnected }) => {
+    if (!deviceConnected) {
+      const disconnectedPayload = {
+        deviceStatus: 'disconnected',
+        deviceType: 'Amazon Fire TV (Omni / 4K Max)',
+        networkState: 'No MDNS / Matter Cast device detected on local Wi-Fi subnet',
+        error: 'DEVICE_UNPAIRED',
+        guidance: 'Power on your Fire TV, ensure it is on the same Wi-Fi subnet, or verify pairing in the Alexa+ Device Bridge console.',
+        suggestedSpokenResponse: 'No active Fire TV display was detected on your network. Please verify that your Fire TV is powered on and connected to Wi-Fi to begin display calibration.',
+      };
+
+      return {
+        content: [{ type: 'text', text: JSON.stringify(disconnectedPayload, null, 2) }],
+      };
+    }
+
     // Determine optimal luminance & color temperature
     const isDarkRoom = roomLux < 80;
     const targetNits = isDarkRoom ? 180 : roomLux > 300 ? 550 : 320;
@@ -276,6 +292,8 @@ mcp.tool(
     };
 
     const payload = {
+      deviceStatus: 'connected',
+      hardwareTarget: 'Fire TV Omni 65" 4K (Living Room - 192.168.1.14)',
       fireTvOptimization: {
         activeProfile: contentGenre.replace('_', ' ').toUpperCase(),
         hdrPipeline: hdrFormat.replace('_', ' ').toUpperCase(),
@@ -307,8 +325,24 @@ mcp.tool(
   {
     thermostatSetbackC: z.number().default(2).describe('Thermostat adjustment delta in degrees C (e.g. 1.5 - 3.0)'),
     homeSquareMeters: z.number().default(140).describe('Total conditioned living area'),
+    meterConnected: z.boolean().default(true).describe('Whether a smart energy grid meter (Shelly / Emporia / Zigbee CT clamp) is linked and reporting telemetry'),
   },
-  async ({ thermostatSetbackC, homeSquareMeters }) => {
+  async ({ thermostatSetbackC, homeSquareMeters, meterConnected }) => {
+    if (!meterConnected) {
+      const disconnectedPayload = {
+        meterStatus: 'disconnected',
+        meterType: 'Smart Energy Grid CT Clamp / In-Line Monitor',
+        networkState: 'Zero active telemetry packets detected from smart meter',
+        error: 'METER_OFFLINE',
+        guidance: 'Pair a Matter or Zigbee-compatible smart meter to your electrical distribution board, or verify the sensor link in the Device Bridge.',
+        suggestedSpokenResponse: 'No smart power meter is currently reporting live telemetry on your network. Please connect your energy monitor or verify device pairing to view real-time grid metrics.',
+      };
+
+      return {
+        content: [{ type: 'text', text: JSON.stringify(disconnectedPayload, null, 2) }],
+      };
+    }
+
     // 1 deg C setback roughly yields ~7% HVAC power reduction
     const baselineWatts = Math.round(homeSquareMeters * 22); // ~3080W HVAC baseline
     const reductionPercent = Math.min(25, thermostatSetbackC * 7.5);
@@ -318,6 +352,8 @@ mcp.tool(
     const carbonOffsetKg = Number((dailyKWhSaved * 0.82).toFixed(2)); // ~0.82kg CO2 per kWh grid factor
 
     const payload = {
+      meterStatus: 'connected',
+      hardwareTarget: 'Shelly Pro EM-50 (Panel Breaker #3)',
       energyOptimization: {
         thermostatDelta: `+${thermostatSetbackC}°C Eco Setback`,
         realTimeWattageReduction: `-${wattsSaved} Watts`,

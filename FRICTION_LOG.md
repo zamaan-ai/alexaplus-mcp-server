@@ -45,3 +45,17 @@
 * **Workaround Used**: Added explicit `navigator.mediaDevices.getUserMedia` hardware permission check and created an on-screen visual notification banner instructing users how to enable speech services or use instant text fallback.
 * **Actionable Suggestion for Amazon / MCP Team**:
   - Provide an official Amazon Polly / Web Audio recording helper in the hackathon starter template so developers aren't reliant on browser-specific speech APIs for hackathon testing.
+
+---
+
+### Friction Log Entry 4: Hardware Absence & Matter Device Emulation in Developer Sandbox
+* **Task Attempted**: Testing hardware-dependent MCP tools (`optimize_firetv_ambient_canvas` and `calculate_energy_grid_savings`) in local development and hackathon judging environments without physical Fire TV hardware or Zigbee electrical sub-metering clamps in the room.
+* **Steps Taken**:
+  1. Attempted to execute display calibration and electrical load analysis without physical devices paired on the local subnet.
+  2. Observed that typical skills either fail with unhandled exceptions or hallucinate fake hardware connections, confusing end users and judges.
+* **Expected Result**: An official Amazon Devices mock bridge or Matter simulator allowing skills to test both "device absent / discovery" and "device verified / streaming" states.
+* **Actual Result**: Because gated Alexa+ developer tools (Category SDK, MCP Toolkit, and Web Simulator) were restricted to preview partners, public developers had no standardized hardware state machine for testing.
+* **Severity Rating**: **High (Simulated vs Real-World Gap)**.
+* **Workaround Used**: Architected an explicit Hardware Presence Protocol in our MCP server (`deviceConnected`, `meterConnected`). When disconnected, tools output realistic, professional diagnostic feedback (`DEVICE_UNPAIRED: No MDNS/Matter Cast detected`, `METER_OFFLINE`). Built an interactive Device Bridge Handshake in the UI that verifies local broadcast handshakes and seamlessly transitions into live calibrated telemetry.
+* **Actionable Suggestion for Amazon / MCP Team**:
+  - Provide an open-source `@amazon-devices/virtual-bridge` library that can simulate Matter Cast, Fire TV Ambient Canvas D65 signals, and smart home sensor packets for self-hosted MCP development.
