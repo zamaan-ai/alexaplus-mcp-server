@@ -1539,7 +1539,12 @@
       streamFeed.insertAdjacentHTML('afterbegin', cardHtml);
     }
 
+    let lastNotificationText = '';
     function showNotificationCard(msg) {
+      if (lastNotificationText === msg) return; // Prevent duplicate notices
+      lastNotificationText = msg;
+      setTimeout(() => { lastNotificationText = ''; }, 5000); // Reset after 5s
+
       const cardHtml = `
         <div class="modal-card" style="border-color: #fde047; background: #fefce8;">
           <div style="font-size: 0.82rem; color: #854d0e; line-height: 1.45;">
