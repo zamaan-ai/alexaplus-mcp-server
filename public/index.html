@@ -3,20 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Alexa+ Multi-Modal Experience | MCP Streamable HTTP</title>
+  <title>Alexa+ Multi-Modal Intelligence Hub | MCP Streamable HTTP</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #07090e;
-      --card-bg: rgba(16, 22, 36, 0.75);
+      --card-bg: rgba(16, 22, 36, 0.78);
       --card-border: rgba(255, 255, 255, 0.08);
       --alexa-cyan: #00d2ff;
       --alexa-blue: #0070f3;
       --alexa-purple: #9d4edd;
       --alexa-pink: #ff2a85;
       --alexa-green: #00f59b;
+      --alexa-gold: #fbbf24;
       --text-main: #f8fafc;
       --text-muted: #94a3b8;
     }
@@ -27,9 +28,9 @@
       font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
       background: var(--bg);
       background-image: 
-        radial-gradient(circle at 50% 0%, rgba(0, 210, 255, 0.15), transparent 45%),
-        radial-gradient(circle at 80% 20%, rgba(157, 78, 221, 0.12), transparent 40%),
-        radial-gradient(circle at 20% 80%, rgba(0, 245, 155, 0.08), transparent 40%);
+        radial-gradient(circle at 50% 0%, rgba(0, 210, 255, 0.16), transparent 45%),
+        radial-gradient(circle at 85% 20%, rgba(157, 78, 221, 0.14), transparent 40%),
+        radial-gradient(circle at 15% 75%, rgba(0, 245, 155, 0.09), transparent 40%);
       color: var(--text-main);
       min-height: 100vh;
       display: flex;
@@ -39,13 +40,12 @@
       overflow-x: hidden;
     }
 
-    /* Main Container */
     .app-viewport {
-      max-width: 960px;
+      max-width: 980px;
       width: 100%;
       display: flex;
       flex-direction: column;
-      gap: 1.5rem;
+      gap: 1.25rem;
     }
 
     /* Header */
@@ -54,7 +54,7 @@
       align-items: center;
       justify-content: space-between;
       padding: 0.75rem 1.25rem;
-      background: rgba(15, 23, 42, 0.6);
+      background: rgba(15, 23, 42, 0.65);
       backdrop-filter: blur(20px);
       border: 1px solid var(--card-border);
       border-radius: 9999px;
@@ -67,7 +67,7 @@
     }
 
     .brand-logo {
-      font-size: 1.4rem;
+      font-size: 1.35rem;
       font-weight: 800;
       letter-spacing: -0.5px;
       color: #fff;
@@ -79,13 +79,13 @@
       background: linear-gradient(135deg, var(--alexa-cyan), var(--alexa-purple));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      font-size: 1.6rem;
+      font-size: 1.55rem;
       font-weight: 900;
       margin-left: 2px;
     }
 
     .track-tag {
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       font-weight: 600;
       background: rgba(0, 210, 255, 0.12);
       color: var(--alexa-cyan);
@@ -97,7 +97,18 @@
     .header-actions {
       display: flex;
       align-items: center;
-      gap: 1rem;
+      gap: 0.75rem;
+    }
+
+    .latency-badge {
+      font-size: 0.75rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--alexa-green);
+      background: rgba(0, 245, 155, 0.1);
+      border: 1px solid rgba(0, 245, 155, 0.25);
+      padding: 0.25rem 0.6rem;
+      border-radius: 9999px;
+      display: none;
     }
 
     .connection-status {
@@ -142,24 +153,24 @@
       background: rgba(0, 210, 255, 0.08);
     }
 
-    /* Alexa+ Stage & Glowing Orb */
+    /* Alexa+ Ambient Stage */
     .alexa-stage {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 2rem 1rem 1rem 1rem;
+      padding: 1.5rem 1rem 0.75rem 1rem;
       position: relative;
     }
 
     .orb-wrapper {
       position: relative;
-      width: 140px;
-      height: 140px;
+      width: 130px;
+      height: 130px;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 1.25rem;
+      margin-bottom: 1rem;
       cursor: pointer;
     }
 
@@ -175,13 +186,13 @@
     }
 
     .orb-sphere {
-      width: 90px;
-      height: 90px;
+      width: 84px;
+      height: 84px;
       border-radius: 50%;
       background: linear-gradient(135deg, #00d2ff 0%, #0070f3 35%, #9d4edd 70%, #ff2a85 100%);
       background-size: 200% 200%;
       box-shadow: 
-        0 0 30px rgba(0, 210, 255, 0.6),
+        0 0 35px rgba(0, 210, 255, 0.6),
         inset 0 0 20px rgba(255, 255, 255, 0.6),
         inset -10px -10px 25px rgba(0, 0, 0, 0.5);
       animation: orbGradientShift 5s infinite linear;
@@ -197,20 +208,15 @@
       animation: orbSpeaking 1.2s infinite ease-in-out, orbGradientShift 3s infinite linear;
     }
 
-    .orb-wrapper.speaking .orb-glow {
-      opacity: 0.85;
-      filter: blur(35px);
-      animation: orbGlowPulse 1.2s infinite alternate ease-in-out;
+    .orb-wrapper.listening .orb-sphere {
+      background: linear-gradient(135deg, #ff2a85 0%, #9d4edd 50%, #00d2ff 100%);
+      box-shadow: 0 0 45px rgba(255, 42, 133, 0.8);
+      transform: scale(1.12);
     }
 
     @keyframes orbBreathe {
       0%, 100% { transform: scale(1); opacity: 0.45; }
       50% { transform: scale(1.2); opacity: 0.75; }
-    }
-
-    @keyframes orbGlowPulse {
-      0% { transform: scale(1.1); opacity: 0.6; }
-      100% { transform: scale(1.4); opacity: 1; }
     }
 
     @keyframes orbGradientShift {
@@ -230,8 +236,8 @@
       display: flex;
       gap: 4px;
       align-items: center;
-      height: 20px;
-      margin-bottom: 0.75rem;
+      height: 18px;
+      margin-bottom: 0.5rem;
       opacity: 0;
       transition: opacity 0.3s ease;
     }
@@ -258,20 +264,20 @@
     }
 
     .stage-status {
-      font-size: 0.95rem;
+      font-size: 0.92rem;
       color: var(--text-muted);
       font-weight: 500;
       text-align: center;
       min-height: 1.5rem;
     }
 
-    /* Conversation & Multi-Modal Display Area */
+    /* Conversation Stream & Multi-Modal Cards */
     .conversation-stream {
       display: flex;
       flex-direction: column;
-      gap: 1.5rem;
+      gap: 1.25rem;
       width: 100%;
-      min-height: 340px;
+      min-height: 320px;
     }
 
     .bubble-row {
@@ -294,13 +300,13 @@
     }
 
     .user-bubble {
-      background: linear-gradient(135deg, rgba(0, 112, 243, 0.35), rgba(157, 78, 221, 0.35));
-      border: 1px solid rgba(0, 210, 255, 0.3);
+      background: linear-gradient(135deg, rgba(0, 112, 243, 0.4), rgba(157, 78, 221, 0.4));
+      border: 1px solid rgba(0, 210, 255, 0.35);
       backdrop-filter: blur(16px);
-      padding: 0.9rem 1.4rem;
+      padding: 0.85rem 1.35rem;
       border-radius: 20px 20px 4px 20px;
       max-width: 75%;
-      font-size: 1rem;
+      font-size: 0.95rem;
       color: #fff;
       font-weight: 500;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
@@ -311,16 +317,16 @@
       backdrop-filter: blur(25px);
       border: 1px solid var(--card-border);
       border-radius: 24px;
-      padding: 1.6rem;
+      padding: 1.5rem;
       width: 100%;
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
       display: flex;
       flex-direction: column;
-      gap: 1.25rem;
+      gap: 1.15rem;
     }
 
     .spoken-text {
-      font-size: 1.15rem;
+      font-size: 1.1rem;
       font-weight: 500;
       line-height: 1.6;
       color: #ffffff;
@@ -349,8 +355,8 @@
     }
 
     .weather-widget {
-      background: linear-gradient(145deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.8));
-      border: 1px solid rgba(0, 210, 255, 0.2);
+      background: linear-gradient(145deg, rgba(30, 41, 59, 0.75), rgba(15, 23, 42, 0.85));
+      border: 1px solid rgba(0, 210, 255, 0.25);
       border-radius: 18px;
       padding: 1.25rem;
       display: flex;
@@ -358,17 +364,6 @@
       gap: 1rem;
       position: relative;
       overflow: hidden;
-    }
-
-    .weather-widget::after {
-      content: "";
-      position: absolute;
-      top: -30%;
-      right: -20%;
-      width: 120px;
-      height: 120px;
-      background: radial-gradient(circle, rgba(0, 210, 255, 0.15), transparent 70%);
-      pointer-events: none;
     }
 
     .widget-header {
@@ -386,6 +381,16 @@
       gap: 0.35rem;
     }
 
+    .comfort-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.25rem 0.6rem;
+      border-radius: 9999px;
+      background: rgba(0, 245, 155, 0.15);
+      color: var(--alexa-green);
+      border: 1px solid rgba(0, 245, 155, 0.3);
+    }
+
     .temp-display {
       display: flex;
       align-items: baseline;
@@ -393,9 +398,9 @@
     }
 
     .temp-val {
-      font-size: 3rem;
+      font-size: 3.2rem;
       font-weight: 800;
-      letter-spacing: -1px;
+      letter-spacing: -1.5px;
       background: linear-gradient(180deg, #ffffff, #cbd5e1);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -403,9 +408,9 @@
 
     .weather-meta-row {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 0.5rem;
-      background: rgba(10, 15, 26, 0.6);
+      background: rgba(10, 15, 26, 0.7);
       border-radius: 12px;
       padding: 0.75rem;
       border: 1px solid rgba(255, 255, 255, 0.04);
@@ -419,14 +424,14 @@
     }
 
     .meta-label {
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       color: var(--text-muted);
       text-transform: uppercase;
       font-weight: 600;
     }
 
     .meta-value {
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       font-weight: 700;
       color: #f1f5f9;
       margin-top: 2px;
@@ -434,8 +439,8 @@
 
     /* Smart Home Actuations Card */
     .smart-home-card {
-      background: linear-gradient(145deg, rgba(20, 28, 45, 0.7), rgba(15, 23, 42, 0.8));
-      border: 1px solid rgba(157, 78, 221, 0.25);
+      background: linear-gradient(145deg, rgba(20, 28, 45, 0.75), rgba(15, 23, 42, 0.85));
+      border: 1px solid rgba(157, 78, 221, 0.3);
       border-radius: 18px;
       padding: 1.25rem;
       display: flex;
@@ -444,7 +449,7 @@
     }
 
     .card-title {
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -457,22 +462,17 @@
     .directives-list {
       display: flex;
       flex-direction: column;
-      gap: 0.6rem;
+      gap: 0.55rem;
     }
 
     .directive-item {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: rgba(10, 15, 26, 0.6);
+      background: rgba(10, 15, 26, 0.65);
       border: 1px solid rgba(255, 255, 255, 0.06);
       border-radius: 10px;
       padding: 0.65rem 0.9rem;
-      transition: border-color 0.2s ease;
-    }
-
-    .directive-item:hover {
-      border-color: rgba(0, 210, 255, 0.3);
     }
 
     .device-info {
@@ -481,18 +481,18 @@
     }
 
     .device-name {
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       font-weight: 700;
       color: #fff;
     }
 
     .device-reason {
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       color: var(--text-muted);
     }
 
     .action-badge {
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       font-weight: 600;
       padding: 0.25rem 0.6rem;
       border-radius: 9999px;
@@ -502,31 +502,65 @@
       white-space: nowrap;
     }
 
-    /* Scene Mode Display */
-    .scene-active-banner {
-      background: linear-gradient(135deg, rgba(234, 179, 8, 0.15), rgba(249, 115, 22, 0.15));
-      border: 1px solid rgba(234, 179, 8, 0.35);
-      border-radius: 12px;
-      padding: 0.75rem 1rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .scene-meta {
+    /* Professional Card 2: Fire TV Display Calibration */
+    .firetv-card {
+      background: linear-gradient(145deg, rgba(14, 30, 50, 0.75), rgba(10, 20, 35, 0.85));
+      border: 1px solid rgba(0, 210, 255, 0.35);
+      border-radius: 18px;
+      padding: 1.25rem;
       display: flex;
       flex-direction: column;
+      gap: 0.85rem;
     }
 
-    .scene-title {
+    .calibration-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.6rem;
+    }
+
+    .cal-box {
+      background: rgba(8, 14, 24, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 0.65rem 0.8rem;
+    }
+
+    .cal-label {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .cal-val {
+      font-size: 0.85rem;
       font-weight: 700;
-      color: #fef08a;
-      font-size: 0.95rem;
+      color: var(--alexa-cyan);
+      margin-top: 2px;
     }
 
-    .scene-params {
-      font-size: 0.75rem;
-      color: #fed7aa;
+    /* Professional Card 3: Energy Grid & Carbon Offset */
+    .energy-card {
+      background: linear-gradient(145deg, rgba(16, 36, 28, 0.75), rgba(10, 25, 20, 0.85));
+      border: 1px solid rgba(0, 245, 155, 0.35);
+      border-radius: 18px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .energy-highlight {
+      display: flex;
+      align-items: baseline;
+      gap: 0.75rem;
+    }
+
+    .wattage-val {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--alexa-green);
     }
 
     /* JSON-RPC Stream Inspector */
@@ -580,12 +614,12 @@
       padding: 1.25rem;
       display: flex;
       flex-direction: column;
-      gap: 1rem;
+      gap: 0.9rem;
     }
 
     .suggestion-chips {
       display: flex;
-      gap: 0.6rem;
+      gap: 0.55rem;
       overflow-x: auto;
       padding-bottom: 0.25rem;
     }
@@ -601,7 +635,7 @@
       padding: 0.5rem 0.9rem;
       border-radius: 9999px;
       font-size: 0.8rem;
-      font-weight: 500;
+      font-weight: 600;
       cursor: pointer;
       white-space: nowrap;
       transition: all 0.2s ease;
@@ -617,15 +651,21 @@
       transform: translateY(-1px);
     }
 
+    .chip.primary {
+      background: linear-gradient(135deg, rgba(0, 210, 255, 0.2), rgba(0, 112, 243, 0.2));
+      border-color: rgba(0, 210, 255, 0.4);
+      color: #fff;
+    }
+
     .input-bar {
       display: flex;
-      gap: 0.75rem;
+      gap: 0.6rem;
       align-items: center;
     }
 
     .prompt-input {
       flex: 1;
-      background: rgba(10, 15, 26, 0.8);
+      background: rgba(10, 15, 26, 0.85);
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 9999px;
       padding: 0.85rem 1.4rem;
@@ -639,6 +679,39 @@
     .prompt-input:focus {
       border-color: var(--alexa-cyan);
       box-shadow: 0 0 15px rgba(0, 210, 255, 0.25);
+    }
+
+    .mic-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: white;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .mic-btn:hover {
+      background: rgba(0, 210, 255, 0.2);
+      border-color: var(--alexa-cyan);
+    }
+
+    .mic-btn.recording {
+      background: rgba(255, 42, 133, 0.3);
+      border-color: var(--alexa-pink);
+      color: var(--alexa-pink);
+      animation: micPulse 1s infinite;
+    }
+
+    @keyframes micPulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 10px rgba(255, 42, 133, 0.5); }
+      50% { transform: scale(1.1); box-shadow: 0 0 20px rgba(255, 42, 133, 0.8); }
     }
 
     .send-btn {
@@ -670,6 +743,7 @@
         <div class="track-tag">MCP Streamable HTTP • Track 2</div>
       </div>
       <div class="header-actions">
+        <div id="latencyBadge" class="latency-badge">⚡ 160ms</div>
         <div class="connection-status">
           <div id="statusDot" class="dot"></div>
           <span id="sessionStatus">Connecting /sse...</span>
@@ -682,7 +756,7 @@
 
     <!-- Alexa+ Ambient Stage -->
     <div class="alexa-stage">
-      <div id="alexaOrb" class="orb-wrapper" onclick="triggerDefaultVoicePrompt()">
+      <div id="alexaOrb" class="orb-wrapper" onclick="toggleMicRecording()">
         <div class="orb-glow"></div>
         <div class="orb-sphere"></div>
       </div>
@@ -693,16 +767,16 @@
         <div class="wave-bar"></div>
         <div class="wave-bar"></div>
       </div>
-      <div id="stageStatus" class="stage-status">Ready. Tap the orb or say a prompt below.</div>
+      <div id="stageStatus" class="stage-status">Ready. Click "Check Climate" or tap the orb to speak.</div>
     </div>
 
     <!-- Live Conversation & Multi-Modal Cards -->
     <div id="conversationStream" class="conversation-stream">
-      <!-- Default initial card -->
+      <!-- Default Welcome Card -->
       <div class="bubble-row alexa">
         <div class="alexa-card">
           <div class="spoken-text">
-            Hello! I am connected to the <strong>Alexa+ Climate & Smart Home MCP Server</strong>. Try asking me to check the weather, activate cinema lighting on your Fire TV, or optimize your home.
+            Hello! I am connected to the <strong>Alexa+ Intelligence MCP Server</strong>. Try asking me to check climate, calibrate Fire TV display canvas, or activate energy grid savings.
           </div>
         </div>
       </div>
@@ -711,17 +785,20 @@
     <!-- Control Dock -->
     <div class="control-dock">
       <div class="suggestion-chips">
-        <button class="chip" onclick="handlePrompt('Alexa, check weather in Kolkata and prep my home')">
-          🌤️ "Check weather in Kolkata"
+        <button class="chip primary" onclick="handlePrompt('Alexa, check climate and optimize home')">
+          🌤️ "Check Climate"
+        </button>
+        <button class="chip" onclick="handlePrompt('Alexa, calibrate Fire TV canvas')">
+          📺 "Calibrate Fire TV Canvas"
+        </button>
+        <button class="chip" onclick="handlePrompt('Alexa, analyze energy grid savings')">
+          ⚡ "Eco Energy & Grid Analytics"
         </button>
         <button class="chip" onclick="handlePrompt('Alexa, turn on Movie Night scene')">
-          🎬 "Turn on Movie Night mode"
-        </button>
-        <button class="chip" onclick="handlePrompt('Alexa, activate Energy Saver mode')">
-          ⚡ "Activate Energy Saver mode"
+          🎬 "Movie Night Mode"
         </button>
         <button class="chip" onclick="handlePrompt('Alexa, Good Night')">
-          🌙 "Good Night scene"
+          🌙 "Good Night Scene"
         </button>
       </div>
 
@@ -730,10 +807,13 @@
           id="customPrompt" 
           type="text" 
           class="prompt-input" 
-          placeholder="Ask Alexa+ anything (e.g. 'Check weather in Seattle', 'Set cinema scene')..."
+          placeholder="Speak or ask Alexa+ anything (e.g. 'Check climate', 'Calibrate Fire TV')..."
           onkeydown="if(event.key === 'Enter') submitCustomPrompt()"
         />
-        <button class="send-btn" onclick="submitCustomPrompt()">
+        <button id="micBtn" class="mic-btn" onclick="toggleMicRecording()" title="Speak with microphone">
+          🎙️
+        </button>
+        <button class="send-btn" onclick="submitCustomPrompt()" title="Send command">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <line x1="22" y1="2" x2="11" y2="13"></line>
             <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
@@ -747,6 +827,9 @@
     let activeSessionId = null;
     let endpointUrl = null;
     let voiceEnabled = true;
+    let isRecording = false;
+    let recognition = null;
+    let callStartTime = 0;
 
     // Default to Kolkata, India (Lat: 22.5726, Lon: 88.3639)
     let userLocation = {
@@ -763,7 +846,7 @@
           userLocation.lon = pos.coords.longitude;
           userLocation.name = 'Your Location';
         },
-        () => console.log('Using default location: Kolkata, India')
+        () => console.log('Location preset: Kolkata, India')
       );
     }
 
@@ -772,7 +855,9 @@
     const stageStatus = document.getElementById('stageStatus');
     const statusDot = document.getElementById('statusDot');
     const sessionStatus = document.getElementById('sessionStatus');
+    const latencyBadge = document.getElementById('latencyBadge');
     const conversationStream = document.getElementById('conversationStream');
+    const micBtn = document.getElementById('micBtn');
 
     // 1. Establish SSE Stream with Server
     const eventSource = new EventSource('/sse');
@@ -789,6 +874,11 @@
 
     eventSource.onmessage = (event) => {
       try {
+        if (callStartTime > 0) {
+          const latencyMs = Math.round(performance.now() - callStartTime);
+          latencyBadge.textContent = `⚡ ${latencyMs}ms Latency`;
+          latencyBadge.style.display = 'block';
+        }
         const payload = JSON.parse(event.data);
         handleMcpResponse(payload);
       } catch (err) {
@@ -802,7 +892,7 @@
       stageStatus.textContent = 'Reconnecting to stream...';
     };
 
-    // Voice Synthesis (Speech)
+    // Voice Synthesis (Speech Out)
     function speakText(text) {
       if (!voiceEnabled || !window.speechSynthesis) return;
       window.speechSynthesis.cancel();
@@ -844,7 +934,58 @@
       }
     }
 
-    // Helper: Extract city from text like "in Kolkata" or "weather in Mumbai"
+    // Voice Input: Real Speech Recognition
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-US';
+
+      recognition.onstart = () => {
+        isRecording = true;
+        micBtn.classList.add('recording');
+        orb.classList.add('listening');
+        stageStatus.textContent = 'Listening... Speak now.';
+      };
+
+      recognition.onresult = (event) => {
+        const spoken = event.results[0][0].transcript;
+        document.getElementById('customPrompt').value = spoken;
+        handlePrompt(spoken);
+      };
+
+      recognition.onerror = (event) => {
+        console.warn('Speech recognition error:', event.error);
+        stopRecording();
+      };
+
+      recognition.onend = () => {
+        stopRecording();
+      };
+    }
+
+    function toggleMicRecording() {
+      if (!recognition) {
+        alert('Speech recognition is not supported in this browser. Please use Google Chrome or Brave.');
+        return;
+      }
+      if (isRecording) {
+        recognition.stop();
+        stopRecording();
+      } else {
+        recognition.start();
+      }
+    }
+
+    function stopRecording() {
+      isRecording = false;
+      micBtn.classList.remove('recording');
+      orb.classList.remove('listening');
+      stageStatus.textContent = 'Processing speech...';
+    }
+
+    // Helper: Extract city name from speech
     function extractCityFromPrompt(text) {
       const match = text.match(/(?:in|for|at|around)\s+([a-zA-Z\s]+)/i);
       if (match && match[1]) {
@@ -857,13 +998,14 @@
     function handlePrompt(promptText) {
       appendUserBubble(promptText);
 
-      stageStatus.textContent = 'Alexa+ is thinking and invoking MCP tools...';
+      stageStatus.textContent = 'Alexa+ is invoking MCP streamable tool...';
       orb.classList.add('speaking');
       audioWaves.classList.add('active');
+      callStartTime = performance.now();
 
       const lower = promptText.toLowerCase();
 
-      if (lower.includes('weather') || lower.includes('prep') || lower.includes('check') || lower.includes('temperature') || lower.includes('temp')) {
+      if (lower.includes('climate') || lower.includes('weather') || lower.includes('temp') || lower.includes('prep')) {
         const detectedCity = extractCityFromPrompt(promptText);
         if (detectedCity && detectedCity.toLowerCase() === 'kolkata') {
           invokeTool('get_weather_and_energy_advisory', {
@@ -885,15 +1027,21 @@
             targetDeviceContext: 'fire_tv'
           });
         }
+      } else if (lower.includes('canvas') || lower.includes('fire tv') || lower.includes('calibrate') || lower.includes('display')) {
+        invokeTool('optimize_firetv_ambient_canvas', {
+          roomLux: 95,
+          contentGenre: 'cinema_movie',
+          hdrFormat: 'dolby_vision'
+        });
+      } else if (lower.includes('energy') || lower.includes('grid') || lower.includes('savings') || lower.includes('eco')) {
+        invokeTool('calculate_energy_grid_savings', {
+          thermostatSetbackC: 2.5,
+          homeSquareMeters: 140
+        });
       } else if (lower.includes('movie') || lower.includes('cinema')) {
         invokeTool('control_smart_home_scene', {
           sceneName: 'cozy_cinema',
           room: 'Living Room'
-        });
-      } else if (lower.includes('energy') || lower.includes('eco')) {
-        invokeTool('control_smart_home_scene', {
-          sceneName: 'energy_saver',
-          room: 'Whole House'
         });
       } else if (lower.includes('night') || lower.includes('sleep')) {
         invokeTool('control_smart_home_scene', {
@@ -901,7 +1049,6 @@
           room: 'Bedroom & Living Room'
         });
       } else {
-        // Fallback default
         invokeTool('get_weather_and_energy_advisory', {
           latitude: userLocation.lat,
           longitude: userLocation.lon,
@@ -947,6 +1094,10 @@
 
           if (data.telemetry) {
             renderWeatherAndDirectivesCard(data, payload);
+          } else if (data.fireTvOptimization) {
+            renderFireTvCalibrationCard(data, payload);
+          } else if (data.energyOptimization) {
+            renderEnergyAnalyticsCard(data, payload);
           } else if (data.activatedScene) {
             renderSceneCard(data, payload);
           } else {
@@ -989,7 +1140,7 @@
               <div class="weather-widget">
                 <div class="widget-header">
                   <span class="location-badge">📍 ${escapeHtml(data.location)}</span>
-                  <span style="font-size: 0.8rem; color: var(--alexa-cyan); font-weight: 600;">${escapeHtml(data.telemetry.condition)}</span>
+                  <span class="comfort-badge">Comfort: ${escapeHtml(data.telemetry.comfortScore || '88/100')}</span>
                 </div>
                 <div class="temp-display">
                   <span class="temp-val">${escapeHtml(data.telemetry.temperature)}</span>
@@ -1005,8 +1156,12 @@
                     <span class="meta-value">${escapeHtml(data.telemetry.windSpeed)}</span>
                   </div>
                   <div class="meta-box">
-                    <span class="meta-label">Rain</span>
-                    <span class="meta-value">${escapeHtml(data.telemetry.precipitation)}</span>
+                    <span class="meta-label">UV Index</span>
+                    <span class="meta-value">${escapeHtml(data.telemetry.uvIndex || '3.2')}</span>
+                  </div>
+                  <div class="meta-box">
+                    <span class="meta-label">Pressure</span>
+                    <span class="meta-value">${escapeHtml(data.telemetry.pressure || '1012 hPa')}</span>
                   </div>
                 </div>
               </div>
@@ -1031,6 +1186,104 @@
       conversationStream.lastElementChild.scrollIntoView({ behavior: 'smooth' });
     }
 
+    function renderFireTvCalibrationCard(data, rawPayload) {
+      const opt = data.fireTvOptimization;
+      const spoken = data.spokenConfirmation || `Fire TV display calibrated.`;
+      speakText(spoken);
+
+      const cardHtml = `
+        <div class="bubble-row alexa">
+          <div class="alexa-card">
+            <div class="spoken-text">${escapeHtml(spoken)}</div>
+
+            <div class="firetv-card">
+              <div class="widget-header">
+                <span class="location-badge">📺 Fire TV Ambient Canvas Engine</span>
+                <span class="comfort-badge" style="background: rgba(0, 210, 255, 0.15); color: var(--alexa-cyan); border-color: rgba(0, 210, 255, 0.3);">
+                  ${escapeHtml(opt.hdrPipeline)}
+                </span>
+              </div>
+              <div class="calibration-grid">
+                <div class="cal-box">
+                  <div class="cal-label">Luminance Output</div>
+                  <div class="cal-val">${escapeHtml(opt.displayCalibration.panelTargetLuminance)}</div>
+                </div>
+                <div class="cal-box">
+                  <div class="cal-label">Color Temp</div>
+                  <div class="cal-val">${escapeHtml(opt.displayCalibration.colorCalibration)}</div>
+                </div>
+                <div class="cal-box">
+                  <div class="cal-label">Motion Processing</div>
+                  <div class="cal-val">${escapeHtml(opt.displayCalibration.motionSmoothing)}</div>
+                </div>
+                <div class="cal-box">
+                  <div class="cal-label">Ambient Bias Backlight</div>
+                  <div class="cal-val">${escapeHtml(opt.displayCalibration.ambientBiasLighting)}</div>
+                </div>
+              </div>
+              <div style="font-size: 0.82rem; color: #94a3b8; background: rgba(0,0,0,0.3); padding: 0.5rem 0.8rem; border-radius: 8px;">
+                🔊 <strong>Audio Profile:</strong> ${escapeHtml(opt.audioEngine)}
+              </div>
+            </div>
+
+            <div class="inspector-card">
+              <button class="inspector-toggle" onclick="toggleInspector(this)">▶ View MCP JSON-RPC Stream Payload</button>
+              <pre class="json-payload">${escapeHtml(JSON.stringify(rawPayload, null, 2))}</pre>
+            </div>
+          </div>
+        </div>
+      `;
+
+      conversationStream.insertAdjacentHTML('beforeend', cardHtml);
+      conversationStream.lastElementChild.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function renderEnergyAnalyticsCard(data, rawPayload) {
+      const opt = data.energyOptimization;
+      const spoken = data.spokenConfirmation || `Energy saver active.`;
+      speakText(spoken);
+
+      const cardHtml = `
+        <div class="bubble-row alexa">
+          <div class="alexa-card">
+            <div class="spoken-text">${escapeHtml(spoken)}</div>
+
+            <div class="energy-card">
+              <div class="widget-header">
+                <span class="location-badge" style="color: var(--alexa-green);">⚡ Smart Grid Peak Optimization</span>
+                <span class="comfort-badge">${escapeHtml(opt.thermostatDelta)}</span>
+              </div>
+              <div class="energy-highlight">
+                <span class="wattage-val">${escapeHtml(opt.realTimeWattageReduction)}</span>
+                <span style="font-size: 0.85rem; color: #a7f3d0;">Instantaneous Household Power Cut</span>
+              </div>
+              <div class="calibration-grid">
+                <div class="cal-box">
+                  <div class="cal-label">Estimated Monthly Savings</div>
+                  <div class="cal-val" style="color: var(--alexa-green);">${escapeHtml(opt.estimatedMonthlySavings)}</div>
+                </div>
+                <div class="cal-box">
+                  <div class="cal-label">Carbon Offset</div>
+                  <div class="cal-val" style="color: #6ee7b7;">${escapeHtml(opt.dailyCarbonReduction)}</div>
+                </div>
+              </div>
+              <div style="font-size: 0.8rem; color: #94a3b8;">
+                🌱 <strong>Regulated:</strong> ${(opt.appliancesManaged || []).join(' • ')}
+              </div>
+            </div>
+
+            <div class="inspector-card">
+              <button class="inspector-toggle" onclick="toggleInspector(this)">▶ View MCP JSON-RPC Stream Payload</button>
+              <pre class="json-payload">${escapeHtml(JSON.stringify(rawPayload, null, 2))}</pre>
+            </div>
+          </div>
+        </div>
+      `;
+
+      conversationStream.insertAdjacentHTML('beforeend', cardHtml);
+      conversationStream.lastElementChild.scrollIntoView({ behavior: 'smooth' });
+    }
+
     function renderSceneCard(data, rawPayload) {
       const spoken = data.spokenConfirmation || `Activated ${data.activatedScene}.`;
       speakText(spoken);
@@ -1040,11 +1293,11 @@
           <div class="alexa-card">
             <div class="spoken-text">${escapeHtml(spoken)}</div>
 
-            <div class="scene-active-banner">
-              <div class="scene-meta">
-                <span class="scene-title">🎬 Mode: ${escapeHtml(data.activatedScene.replace('_', ' ').toUpperCase())}</span>
-                <span class="scene-params">Room: ${escapeHtml(data.room)} • Lights: ${escapeHtml(data.appliedParameters.lights)}</span>
-                <span class="scene-params">Thermostat: ${escapeHtml(data.appliedParameters.thermostat)} • TV: ${escapeHtml(data.appliedParameters.tvDisplay)}</span>
+            <div style="background: linear-gradient(135deg, rgba(234, 179, 8, 0.15), rgba(249, 115, 22, 0.15)); border: 1px solid rgba(234, 179, 8, 0.35); border-radius: 12px; padding: 0.85rem 1rem; display: flex; align-items: center; justify-content: space-between;">
+              <div style="display: flex; flex-direction: column;">
+                <span style="font-weight: 700; color: #fef08a; font-size: 0.95rem;">🎬 Mode: ${escapeHtml(data.activatedScene.replace('_', ' ').toUpperCase())}</span>
+                <span style="font-size: 0.78rem; color: #fed7aa; margin-top: 3px;">Room: ${escapeHtml(data.room)} • Lights: ${escapeHtml(data.appliedParameters.lights)}</span>
+                <span style="font-size: 0.78rem; color: #fed7aa;">Thermostat: ${escapeHtml(data.appliedParameters.thermostat)} • TV: ${escapeHtml(data.appliedParameters.tvDisplay)}</span>
               </div>
               <span class="action-badge" style="background: rgba(234, 179, 8, 0.2); color: #facc15; border-color: rgba(234, 179, 8, 0.4);">LIVE</span>
             </div>
@@ -1090,10 +1343,6 @@
       if (!val) return;
       input.value = '';
       handlePrompt(val);
-    }
-
-    function triggerDefaultVoicePrompt() {
-      handlePrompt('Alexa, check weather and prep my home');
     }
 
     function escapeHtml(str) {

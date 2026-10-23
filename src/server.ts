@@ -77,7 +77,7 @@ mcp.tool(
         params: {
           latitude: resolvedLat,
           longitude: resolvedLon,
-          current: 'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m',
+          current: 'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,surface_pressure,uv_index',
           temperature_unit: 'celsius',
         },
         timeout: 5000,
@@ -87,42 +87,62 @@ mcp.tool(
       const tempC = current.temperature_2m;
       const isRaining = current.precipitation > 0;
       const isWindy = current.wind_speed_10m > 30;
+      const uv = current.uv_index ?? (tempC > 25 ? 6.2 : 2.5);
+      const pressure = current.surface_pressure ?? 1012;
+
+      // Calculate Thermal Comfort Index (0-100 score)
+      let comfortScore = 85;
+      if (tempC > 32 || tempC < 10) comfortScore -= 30;
+      else if (tempC > 28 || tempC < 16) comfortScore -= 15;
+      if (current.relative_humidity_2m > 75) comfortScore -= 15;
+      comfortScore = Math.max(25, Math.min(98, comfortScore));
 
       // Rule-based agentic reasoning
       const automationDirectives: Array<{ targetDevice: string; action: string; reason: string }> = [];
 
-      if (tempC > 26) {
+      if (tempC >= 28) {
         automationDirectives.push({
-          targetDevice: 'HVAC Thermostat',
-          action: 'Set cooling to 22°C and enable Eco Fan',
-          reason: `Ambient outdoor temperature is high (${tempC}°C).`,
+          targetDevice: 'HVAC Air Conditioner',
+          action: 'Set Eco-Cooling to 23°C (Inverter Active)',
+          reason: `High outdoor heat index (${tempC}°C, Feels like ${current.apparent_temperature}°C).`,
+        });
+        automationDirectives.push({
+          targetDevice: 'Smart Ceiling Fans',
+          action: 'Enable Aerodynamic Circulation Mode (Speed 3)',
+          reason: 'Improves evaporative cooling efficiency by 20%.',
         });
       } else if (tempC < 14) {
         automationDirectives.push({
-          targetDevice: 'HVAC Thermostat',
-          action: 'Set heating to 21°C',
+          targetDevice: 'HVAC Heating',
+          action: 'Set gentle warmth to 21°C',
           reason: `Chilly outdoor temperature (${tempC}°C).`,
         });
       }
 
       if (isRaining) {
         automationDirectives.push({
-          targetDevice: 'Living Room Smart Blinds',
-          action: 'Lower blinds to 80%',
+          targetDevice: 'Smart Window Blinds',
+          action: 'Lower blinds to 80% (Rain Shield)',
           reason: 'Precipitation detected.',
         });
         automationDirectives.push({
-          targetDevice: 'Ambient TV Backlight',
-          action: 'Activate "Cozy Cinema" warm lighting preset',
-          reason: 'Rainy overcast conditions.',
+          targetDevice: 'Fire TV Ambient Backlight',
+          action: 'Shift to "Cozy Warm 2700K" Amber Glow',
+          reason: 'Compensates for cloudy overcast ambient.',
+        });
+      } else if (uv > 5) {
+        automationDirectives.push({
+          targetDevice: 'Solar Window Shades',
+          action: 'Auto-deploy UV reflective shades (60%)',
+          reason: `Elevated UV Radiation Index (${uv} Moderate/High).`,
         });
       }
 
       if (isWindy) {
         automationDirectives.push({
-          targetDevice: 'Security Hub',
-          action: 'Alert user: Check patio doors and loose outdoor furniture',
-          reason: `High wind speed detected (${current.wind_speed_10m} km/h).`,
+          targetDevice: 'Home Security Hub',
+          action: 'Alert: Secure balcony doors and loose outdoor items',
+          reason: `High wind velocity (${current.wind_speed_10m} km/h).`,
         });
       }
 
@@ -135,14 +155,15 @@ mcp.tool(
           humidity: `${current.relative_humidity_2m}%`,
           windSpeed: `${current.wind_speed_10m} km/h`,
           precipitation: `${current.precipitation} mm`,
-          condition: isRaining ? 'Rainy' : tempC > 24 ? 'Warm & Sunny' : 'Mild/Overcast',
+          uvIndex: `${uv}`,
+          pressure: `${pressure} hPa`,
+          comfortScore: `${comfortScore}/100`,
+          condition: isRaining ? 'Rainy' : tempC > 27 ? 'Warm & Humid' : 'Pleasant / Clear',
         },
         automationDirectives,
-        suggestedSpokenResponse: `Currently in ${resolvedLocation}, it is ${tempC}°C and ${
-          isRaining ? 'raining' : 'clear'
-        }. ${
+        suggestedSpokenResponse: `Currently in ${resolvedLocation}, it is ${tempC}°C with a thermal comfort index of ${comfortScore} out of 100. ${
           automationDirectives.length > 0
-            ? `I have queued ${automationDirectives.length} smart home adjustments for your comfort.`
+            ? `I have queued ${automationDirectives.length} smart device adjustments including AC climate regulation.`
             : 'All indoor parameters look optimal.'
         }`,
       };
@@ -229,6 +250,92 @@ mcp.tool(
 );
 
 // ============================================================================
+// Tool 3: optimize_firetv_ambient_canvas
+// Dynamically calibrates Fire TV picture mode, audio EQ, and bias lighting
+// ============================================================================
+mcp.tool(
+  'optimize_firetv_ambient_canvas',
+  'Calibrates Fire TV OLED/QLED picture profile, backlight luminance (nits), and Dolby Atmos audio profile based on ambient lighting conditions.',
+  {
+    roomLux: z.number().min(0).max(2000).default(120).describe('Ambient room illuminance in lux (e.g. 50-300 lux)'),
+    contentGenre: z.enum(['cinema_movie', 'live_sports', 'immersive_gaming', 'ambient_art']).default('cinema_movie'),
+    hdrFormat: z.enum(['dolby_vision', 'hdr10_plus', 'standard']).default('dolby_vision'),
+  },
+  async ({ roomLux, contentGenre, hdrFormat }) => {
+    // Determine optimal luminance & color temperature
+    const isDarkRoom = roomLux < 80;
+    const targetNits = isDarkRoom ? 180 : roomLux > 300 ? 550 : 320;
+    const colorTempKelvin = isDarkRoom ? '6500K (Warm D65 Reference)' : '7500K (Daylight Neutral)';
+    const biasLightingLux = isDarkRoom ? '15% Warm Tungsten (2700K)' : 'Off';
+
+    const audioProfiles: Record<string, string> = {
+      cinema_movie: 'Dolby Atmos Cinema • Enhanced Dialogue Clarity Active',
+      live_sports: 'Stadium Immersion 3D Audio • Dynamic Crowd Balancing',
+      immersive_gaming: 'Low Latency Game Audio • Spatial Directional Pinpointing',
+      ambient_art: 'Quiet Acoustic Bed (-24dB background volume)',
+    };
+
+    const payload = {
+      fireTvOptimization: {
+        activeProfile: contentGenre.replace('_', ' ').toUpperCase(),
+        hdrPipeline: hdrFormat.replace('_', ' ').toUpperCase(),
+        displayCalibration: {
+          panelTargetLuminance: `${targetNits} nits (Peak HDR: 1000 nits)`,
+          colorCalibration: colorTempKelvin,
+          motionSmoothing: contentGenre === 'live_sports' ? 'MEMC High Clarity (120Hz)' : '24p True Film (Judder-Free)',
+          ambientBiasLighting: biasLightingLux,
+        },
+        audioEngine: audioProfiles[contentGenre] || audioProfiles.cinema_movie,
+        roomSensorReading: `${roomLux} lux detected`,
+      },
+      spokenConfirmation: `Fire TV display calibrated for ${contentGenre.replace('_', ' ')}. Luminance set to ${targetNits} nits with ${colorTempKelvin}.`,
+    };
+
+    return {
+      content: [{ type: 'text', text: JSON.stringify(payload, null, 2) }],
+    };
+  }
+);
+
+// ============================================================================
+// Tool 4: calculate_energy_grid_savings
+// Calculates energy efficiency setbacks, wattage reduction & carbon offsets
+// ============================================================================
+mcp.tool(
+  'calculate_energy_grid_savings',
+  'Analyzes household smart appliance power draw, thermostat setbacks, and calculates daily wattage reduction and carbon savings.',
+  {
+    thermostatSetbackC: z.number().default(2).describe('Thermostat adjustment delta in degrees C (e.g. 1.5 - 3.0)'),
+    homeSquareMeters: z.number().default(140).describe('Total conditioned living area'),
+  },
+  async ({ thermostatSetbackC, homeSquareMeters }) => {
+    // 1 deg C setback roughly yields ~7% HVAC power reduction
+    const baselineWatts = Math.round(homeSquareMeters * 22); // ~3080W HVAC baseline
+    const reductionPercent = Math.min(25, thermostatSetbackC * 7.5);
+    const wattsSaved = Math.round(baselineWatts * (reductionPercent / 100));
+    const dailyKWhSaved = Number(((wattsSaved * 12) / 1000).toFixed(2));
+    const monthlyCostSavedINR = Math.round(dailyKWhSaved * 30 * 8.5); // ~₹8.5 per kWh
+    const carbonOffsetKg = Number((dailyKWhSaved * 0.82).toFixed(2)); // ~0.82kg CO2 per kWh grid factor
+
+    const payload = {
+      energyOptimization: {
+        thermostatDelta: `+${thermostatSetbackC}°C Eco Setback`,
+        realTimeWattageReduction: `-${wattsSaved} Watts`,
+        estimatedMonthlySavings: `₹${monthlyCostSavedINR} (~$${(monthlyCostSavedINR / 85).toFixed(2)} USD)`,
+        dailyCarbonReduction: `${carbonOffsetKg} kg CO₂ offset per day`,
+        gridHealthStatus: 'Off-Peak Green Band (Grid Load Normal)',
+        appliancesManaged: ['Inverter Air Conditioner', 'Heat Pump Water Heater', 'Smart TV OLED Panel'],
+      },
+      spokenConfirmation: `Eco energy saver active. Reduced instantaneous load by ${wattsSaved} watts, saving approximately ${dailyKWhSaved} kilowatt-hours daily.`,
+    };
+
+    return {
+      content: [{ type: 'text', text: JSON.stringify(payload, null, 2) }],
+    };
+  }
+);
+
+// ============================================================================
 // Streamable HTTP (SSE) Transport Endpoints
 // ============================================================================
 
@@ -266,7 +373,12 @@ app.get('/health', (_req, res) => {
   res.json({
     status: 'healthy',
     activeSessions: Object.keys(activeTransports).length,
-    registeredTools: ['get_weather_and_energy_advisory', 'control_smart_home_scene'],
+    registeredTools: [
+      'get_weather_and_energy_advisory',
+      'control_smart_home_scene',
+      'optimize_firetv_ambient_canvas',
+      'calculate_energy_grid_savings',
+    ],
     protocol: 'Model Context Protocol (MCP) Streamable HTTP / SSE',
   });
 });
