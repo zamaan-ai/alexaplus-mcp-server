@@ -939,25 +939,39 @@
     if (SpeechRecognition) {
       recognition = new SpeechRecognition();
       recognition.continuous = false;
-      recognition.interimResults = false;
+      recognition.interimResults = true;
       recognition.lang = 'en-US';
 
       recognition.onstart = () => {
         isRecording = true;
         micBtn.classList.add('recording');
         orb.classList.add('listening');
-        stageStatus.textContent = 'Listening... Speak now.';
+        stageStatus.textContent = '🎙️ Listening... Speak now.';
       };
 
       recognition.onresult = (event) => {
-        const spoken = event.results[0][0].transcript;
-        document.getElementById('customPrompt').value = spoken;
-        handlePrompt(spoken);
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          transcript += event.results[i][0].transcript;
+        }
+        document.getElementById('customPrompt').value = transcript;
+        if (event.results[0].isFinal && transcript.trim().length > 0) {
+          handlePrompt(transcript.trim());
+        }
       };
 
       recognition.onerror = (event) => {
         console.warn('Speech recognition error:', event.error);
         stopRecording();
+        if (event.error === 'not-allowed') {
+          showNotification('Microphone permission was denied. Click the lock/shields icon in your browser URL bar to allow microphone access.');
+        } else if (event.error === 'service-not-allowed') {
+          showNotification('Brave Browser Privacy Note: Brave blocks Google Speech-to-Text by default. Go to brave://settings/privacy and turn on "Use Google services for speech recognition", or type in the bar below!');
+        } else if (event.error === 'no-speech') {
+          stageStatus.textContent = 'No voice detected. Tap mic or type below.';
+        } else {
+          showNotification('Speech input: ' + event.error + '. You can type your command in the prompt bar!');
+        }
       };
 
       recognition.onend = () => {
@@ -965,16 +979,24 @@
       };
     }
 
-    function toggleMicRecording() {
+    async function toggleMicRecording() {
       if (!recognition) {
-        alert('Speech recognition is not supported in this browser. Please use Google Chrome or Brave.');
+        showNotification('Speech recognition is not supported in this browser engine. Please type your query in the prompt bar below!');
         return;
       }
       if (isRecording) {
         recognition.stop();
         stopRecording();
       } else {
-        recognition.start();
+        try {
+          if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            await navigator.mediaDevices.getUserMedia({ audio: true });
+          }
+          recognition.start();
+        } catch (err) {
+          console.warn('Mic access issue:', err);
+          showNotification('Microphone access needed. Click the site settings in your URL bar to allow microphone.');
+        }
       }
     }
 
@@ -982,7 +1004,25 @@
       isRecording = false;
       micBtn.classList.remove('recording');
       orb.classList.remove('listening');
-      stageStatus.textContent = 'Processing speech...';
+      stageStatus.textContent = 'Processing...';
+    }
+
+    function showNotification(msg) {
+      stageStatus.textContent = msg;
+      const row = document.createElement('div');
+      row.className = 'bubble-row alexa';
+      row.innerHTML = `
+        <div class="alexa-card" style="border-color: rgba(251, 191, 36, 0.4); background: rgba(30, 25, 15, 0.8);">
+          <div style="color: #fde047; font-size: 0.92rem; display: flex; align-items: center; gap: 0.5rem;">
+            ⚠️ <strong>Voice / Speech Note:</strong>
+          </div>
+          <div style="font-size: 0.88rem; color: #fef08a; margin-top: 4px; line-height: 1.5;">
+            ${escapeHtml(msg)}
+          </div>
+        </div>
+      `;
+      conversationStream.appendChild(row);
+      row.scrollIntoView({ behavior: 'smooth' });
     }
 
     // Helper: Extract city name from speech
@@ -1049,11 +1089,7 @@
           room: 'Bedroom & Living Room'
         });
       } else {
-        invokeTool('get_weather_and_energy_advisory', {
-          latitude: userLocation.lat,
-          longitude: userLocation.lon,
-          locationName: userLocation.name
-        });
+        invokeTool('ask_alexa_assistant', { query: promptText });
       }
     }
 
@@ -1100,6 +1136,8 @@
             renderEnergyAnalyticsCard(data, payload);
           } else if (data.activatedScene) {
             renderSceneCard(data, payload);
+          } else if (data.assistantResponse) {
+            renderAssistantAnswerCard(data, payload);
           } else {
             renderGenericCard(rawText, payload);
           }
@@ -1301,6 +1339,54 @@
               </div>
               <span class="action-badge" style="background: rgba(234, 179, 8, 0.2); color: #facc15; border-color: rgba(234, 179, 8, 0.4);">LIVE</span>
             </div>
+
+            <div class="inspector-card">
+              <button class="inspector-toggle" onclick="toggleInspector(this)">▶ View MCP JSON-RPC Stream Payload</button>
+              <pre class="json-payload">${escapeHtml(JSON.stringify(rawPayload, null, 2))}</pre>
+            </div>
+          </div>
+        </div>
+      `;
+
+      conversationStream.insertAdjacentHTML('beforeend', cardHtml);
+      conversationStream.lastElementChild.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function renderAssistantAnswerCard(data, rawPayload) {
+      const resp = data.assistantResponse;
+      const spoken = data.suggestedSpokenResponse || resp.answer;
+      speakText(spoken);
+
+      const suggestionsHtml = (resp.followUpSuggestions || []).map(s => `
+        <button class="chip" onclick="handlePrompt('${escapeHtml(s)}')" style="font-size: 0.76rem; padding: 0.35rem 0.75rem;">
+          💡 ${escapeHtml(s)}
+        </button>
+      `).join('');
+
+      const formattedAnswer = escapeHtml(resp.answer).replace(/\n/g, '<br/>');
+
+      const cardHtml = `
+        <div class="bubble-row alexa">
+          <div class="alexa-card">
+            <div class="widget-header">
+              <span class="location-badge" style="color: var(--alexa-purple);">🤖 ${escapeHtml(resp.title || 'Alexa+ Assistant')}</span>
+              <span class="comfort-badge" style="background: rgba(157, 78, 221, 0.15); color: #c084fc; border-color: rgba(157, 78, 221, 0.3);">
+                MCP Tool Response
+              </span>
+            </div>
+
+            <div class="spoken-text" style="font-size: 1.05rem; line-height: 1.6;">
+              ${formattedAnswer}
+            </div>
+
+            ${resp.followUpSuggestions && resp.followUpSuggestions.length > 0 ? `
+              <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.25rem;">
+                <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Suggested Actions:</span>
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                  ${suggestionsHtml}
+                </div>
+              </div>
+            ` : ''}
 
             <div class="inspector-card">
               <button class="inspector-toggle" onclick="toggleInspector(this)">▶ View MCP JSON-RPC Stream Payload</button>
