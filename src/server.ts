@@ -34,18 +34,49 @@ mcp.tool(
   'get_weather_and_energy_advisory',
   'Fetches real-time weather metrics and generates contextual smart home climate and energy recommendations for Alexa+.',
   {
-    latitude: z.number().describe('Latitude of the target location (e.g. 37.7749)'),
-    longitude: z.number().describe('Longitude of the target location (e.g. -122.4194)'),
-    locationName: z.string().optional().describe('Friendly location name (e.g. "Seattle Home")'),
+    latitude: z.number().optional().describe('Latitude of the target location (e.g. 22.5726 for Kolkata)'),
+    longitude: z.number().optional().describe('Longitude of the target location (e.g. 88.3639 for Kolkata)'),
+    cityOrLocation: z.string().optional().describe('City name to search (e.g. "Kolkata", "Delhi", "London")'),
+    locationName: z.string().optional().describe('Friendly location label'),
     targetDeviceContext: z.enum(['fire_tv', 'smart_speaker', 'ambient_display']).default('fire_tv'),
   },
-  async ({ latitude, longitude, locationName, targetDeviceContext }) => {
+  async ({ latitude, longitude, cityOrLocation, locationName, targetDeviceContext }) => {
     try {
-      // Free public Open-Meteo API (no API key needed)
+      let resolvedLat = latitude;
+      let resolvedLon = longitude;
+      let resolvedLocation = locationName || cityOrLocation || 'Kolkata, India';
+
+      // If a city name is provided or coordinates are missing, geocode via Open-Meteo Geocoding API
+      const searchQuery = cityOrLocation || (resolvedLat === undefined ? resolvedLocation : undefined);
+      if (searchQuery && (resolvedLat === undefined || resolvedLon === undefined)) {
+        try {
+          const geoRes = await axios.get('https://geocoding-api.open-meteo.com/v1/search', {
+            params: { name: searchQuery, count: 1, language: 'en', format: 'json' },
+            timeout: 5000,
+          });
+          if (geoRes.data?.results && geoRes.data.results.length > 0) {
+            const firstResult = geoRes.data.results[0];
+            resolvedLat = firstResult.latitude;
+            resolvedLon = firstResult.longitude;
+            resolvedLocation = `${firstResult.name}, ${firstResult.country || ''}`;
+          }
+        } catch (geoErr) {
+          console.warn('Geocoding fallback triggered:', geoErr);
+        }
+      }
+
+      // Default to Kolkata coordinates if still undefined
+      if (resolvedLat === undefined || resolvedLon === undefined) {
+        resolvedLat = 22.5726;
+        resolvedLon = 88.3639;
+        resolvedLocation = 'Kolkata, India';
+      }
+
+      // Free public Open-Meteo API (live satellite & weather stations)
       const response = await axios.get('https://api.open-meteo.com/v1/forecast', {
         params: {
-          latitude,
-          longitude,
+          latitude: resolvedLat,
+          longitude: resolvedLon,
           current: 'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m',
           temperature_unit: 'celsius',
         },
@@ -96,7 +127,7 @@ mcp.tool(
       }
 
       const payload = {
-        location: locationName || `${latitude}, ${longitude}`,
+        location: resolvedLocation,
         targetDeviceContext,
         telemetry: {
           temperature: `${tempC}°C`,
@@ -107,7 +138,7 @@ mcp.tool(
           condition: isRaining ? 'Rainy' : tempC > 24 ? 'Warm & Sunny' : 'Mild/Overcast',
         },
         automationDirectives,
-        suggestedSpokenResponse: `Currently in ${locationName || 'your area'}, it is ${tempC}°C and ${
+        suggestedSpokenResponse: `Currently in ${resolvedLocation}, it is ${tempC}°C and ${
           isRaining ? 'raining' : 'clear'
         }. ${
           automationDirectives.length > 0
