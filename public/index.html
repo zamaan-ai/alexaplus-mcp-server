@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alexa+ MCP Agent Simulator & Dashboard</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: #131a29;
+      --card-border: #1e293b;
+      --cyan: #00f0ff;
+      --green: #00ff88;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 2rem 1rem;
+      display: flex;
+      justify-content: center;
+    }
+    .container {
+      max-width: 900px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 1rem;
+    }
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--cyan);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .badge {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 9999px;
+      background: #1e293b;
+      color: var(--cyan);
+      border: 1px solid rgba(0,240,255,0.3);
+    }
+    .status-pill {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      padding: 0.4rem 0.8rem;
+      border-radius: 9999px;
+      background: rgba(0, 255, 136, 0.1);
+      color: var(--green);
+      border: 1px solid rgba(0, 255, 136, 0.3);
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    h2 {
+      font-size: 1.15rem;
+      margin-bottom: 0.75rem;
+      color: #e2e8f0;
+    }
+    p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.5;
+      margin-bottom: 1rem;
+    }
+    .btn-row {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.25rem;
+    }
+    button {
+      background: #1d4ed8;
+      color: white;
+      border: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      padding: 0.75rem 1.25rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    button:hover {
+      background: #2563eb;
+      transform: translateY(-1px);
+    }
+    button.secondary {
+      background: #334155;
+    }
+    button.secondary:hover {
+      background: #475569;
+    }
+    pre {
+      background: #060911;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 1rem;
+      color: #38bdf8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.85rem;
+      line-height: 1.4;
+      max-height: 380px;
+      overflow: auto;
+    }
+    .highlight-label {
+      color: var(--green);
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>Alexa+ Streamable MCP Server <span class="badge">Track 2</span></h1>
+        <p style="margin: 0; font-size: 0.85rem; color: #64748b;">Protocol: Model Context Protocol (JSON-RPC over SSE)</p>
+      </div>
+      <div id="statusContainer" class="status-pill">
+        <div class="status-dot"></div>
+        <span id="connectionStatus">Connecting to /sse...</span>
+      </div>
+    </header>
+
+    <div class="card">
+      <h2>Simulate Alexa+ Voice & Agent Invocations</h2>
+      <p>Click below to test how an agentic LLM (like Alexa+) queries this MCP server over HTTP to trigger external weather APIs and control smart devices.</p>
+      
+      <div class="btn-row">
+        <button onclick="invokeWeatherAdvisory()">
+          🎙️ "Alexa, check weather & prep my home"
+        </button>
+        <button class="secondary" onclick="invokeCinemaScene()">
+          🎬 "Alexa, turn on Movie Night mode"
+        </button>
+        <button class="secondary" onclick="listAvailableTools()">
+          📋 Inspect MCP Tools Schema
+        </button>
+      </div>
+
+      <span class="highlight-label">Real-time Stream Output:</span>
+      <pre id="streamLogs">// Awaiting session connection...</pre>
+    </div>
+  </div>
+
+  <script>
+    let activeSessionId = null;
+    let endpointUrl = null;
+    const logElem = document.getElementById('streamLogs');
+    const statusElem = document.getElementById('connectionStatus');
+
+    // 1. Establish SSE stream with MCP Server
+    const eventSource = new EventSource('/sse');
+
+    eventSource.addEventListener('endpoint', (e) => {
+      endpointUrl = e.data;
+      const params = new URLSearchParams(endpointUrl.split('?')[1]);
+      activeSessionId = params.get('sessionId');
+      statusElem.textContent = `Connected (Session: ${activeSessionId.substring(0, 8)}...)`;
+      logElem.textContent = `[SSE Stream Connected]\nAssigned Message Endpoint: ${endpointUrl}\nReady for Alexa+ tool calls.`;
+    });
+
+    eventSource.onmessage = (event) => {
+      try {
+        const parsed = JSON.parse(event.data);
+        logElem.textContent = `[Incoming Event Stream Payload]\n` + JSON.stringify(parsed, null, 2);
+      } catch (err) {
+        logElem.textContent = `[Raw Stream Data]:\n${event.data}`;
+      }
+    };
+
+    eventSource.onerror = () => {
+      statusElem.textContent = 'Disconnected / Retrying...';
+      document.querySelector('.status-dot').style.background = '#ef4444';
+    };
+
+    // Helper: Post message to MCP Server
+    async function sendMcpMessage(method, params = {}) {
+      if (!activeSessionId) {
+        alert('SSE session not established yet.');
+        return;
+      }
+      logElem.textContent = `[Dispatching JSON-RPC]: method=${method}...\nPayload: ` + JSON.stringify(params, null, 2);
+
+      const res = await fetch(`/messages?sessionId=${activeSessionId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: Date.now(),
+          method,
+          params
+        })
+      });
+
+      if (!res.ok) {
+        logElem.textContent = `[Error]: HTTP ${res.status} - ${await res.text()}`;
+      }
+    }
+
+    function invokeWeatherAdvisory() {
+      sendMcpMessage('tools/call', {
+        name: 'get_weather_and_energy_advisory',
+        arguments: {
+          latitude: 47.6062,
+          longitude: -122.3321,
+          locationName: 'Seattle Living Room',
+          targetDeviceContext: 'fire_tv'
+        }
+      });
+    }
+
+    function invokeCinemaScene() {
+      sendMcpMessage('tools/call', {
+        name: 'control_smart_home_scene',
+        arguments: {
+          sceneName: 'cozy_cinema',
+          room: 'Living Room'
+        }
+      });
+    }
+
+    function listAvailableTools() {
+      sendMcpMessage('tools/list', {});
+    }
+  </script>
+</body>
+</html>
