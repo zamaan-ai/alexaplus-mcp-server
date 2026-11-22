@@ -5,6 +5,7 @@
 [![MCP Protocol](https://img.shields.io/badge/Protocol-Model%20Context%20Protocol%20(Streamable%20HTTP)-purple.svg)](https://modelcontextprotocol.io/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue.svg)](https://www.typescriptlang.org/)
 [![Tests](https://img.shields.io/badge/Tests-10%2F10%20Passing-brightgreen.svg)](test/verify_tools.ts)
+[![CI](https://github.com/zamaan-ai/alexaplus-mcp-server/actions/workflows/ci.yml/badge.svg)](https://github.com/zamaan-ai/alexaplus-mcp-server/actions)
 
 An enterprise-grade, self-hosted **Model Context Protocol (MCP)** server built with **Streamable HTTP (Server-Sent Events / SSE)** transports. It empowers next-generation AI assistants (such as Alexa+) to dynamically fetch live environmental telemetry, execute authentic TCP socket hardware verification on local subnets, calibrate connected Fire TV display canvases according to SMPTE D65 standards, and autonomously orchestrate smart home energy efficiency.
 
@@ -44,30 +45,31 @@ An enterprise-grade, self-hosted **Model Context Protocol (MCP)** server built w
 
 ## 🏗️ System Architecture
 
-```
-User Voice / Speech Input (Browser WebSpeech)
-                   │
-                   ▼
-┌────────────────────────────────────────────────────────┐
-│             Alexa+ Frontend Agent Station              │
-│  - Adaptive Layout (1140px Workstation / 460px Mobile) │
-│  - Living Companion Orb with Blinking Eyes             │
-│  - Real TCP Socket Hardware Prober & Virtual Bridge    │
-│  - Two-Way Audio: Voice Mic Input & TTS Speech Engine  │
-└────────────────────────────────────────────────────────┘
-                   │
-                   ▼ [HTTP POST /messages?sessionId=...] (JSON-RPC 2.0)
-┌────────────────────────────────────────────────────────┐
-│             Alexa+ MCP Server (Node.js/TS)             │
-│  - Streamable HTTP Transport: GET /sse & POST /messages│
-│  - Protocol: @modelcontextprotocol/sdk v1.x            │
-│  - Validation: Strict Zod runtime schemas              │
-│  - Hardware Probe: TCP Raw Sockets (/api/verify-hw)    │
-│  - Live Telemetry: Open-Meteo REST API                 │
-└────────────────────────────────────────────────────────┘
-                   │
-                   ▼ [HTTP GET /sse] (Downstream Streamable SSE Event)
-Multi-Modal Visual Widgets (Weather, Fire TV Canvas, Grid Savings, IoT Scenes)
+```mermaid
+flowchart TD
+    subgraph ClientLayer["Frontend & Assistant Workstation"]
+        A["Voice & Speech Input (WebSpeech API)"] --> B["Alexa+ Adaptive UI (1140px Desktop / 460px Mobile)"]
+        B --> C["Living Companion Orb (Visual State & TTS Feedback)"]
+    end
+
+    subgraph MCPTransport["MCP Streamable HTTP Transport Layer"]
+        B -- "HTTP POST /messages?sessionId=... (JSON-RPC 2.0)" --> D["Express.js Server (@modelcontextprotocol/sdk)"]
+        D -- "HTTP GET /sse (Downstream Server-Sent Events)" --> B
+    end
+
+    subgraph AutonomousTools["Zod-Validated Agent Tools & Dispatcher"]
+        D --> E{"Tool Router & Runtime Validation"}
+        E --> F["get_weather_and_energy_advisory<br/>(Open-Meteo Satellite & Thermal Comfort Index)"]
+        E --> G["optimize_firetv_ambient_canvas<br/>(SMPTE D65 6500K & 120Hz MEMC Calibration)"]
+        E --> H["calculate_energy_grid_savings<br/>(-578W Dynamic Load & Carbon Offset)"]
+        E --> I["control_smart_home_scene<br/>(Matter & IoT Scene Orchestration)"]
+    end
+
+    subgraph HardwareVerification["Physical & Virtual Device Layer"]
+        D --> J["Non-Blocking TCP Socket Prober (net.Socket)"]
+        J -- "Port 5555" --> K["Physical / Virtual Fire TV (ADB)"]
+        J -- "Port 80" --> L["Subnet Smart Meter Hardware"]
+    end
 ```
 
 ---
